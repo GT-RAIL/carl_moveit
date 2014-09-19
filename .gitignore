@@ -1,0 +1,6 @@
+*~
+*.pyc
+.cproject
+.project
+.settings
+sanity.urdf

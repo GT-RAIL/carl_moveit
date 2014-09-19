@@ -1,0 +1,4 @@
+<launch>
+  <!-- <rosparam command="load" file="$(find carl_moveit)/config/sensors_depth.yaml" /> -->
+  <rosparam command="load" file="$(find carl_moveit)/config/sensors_point_cloud.yaml" />
+</launch>
