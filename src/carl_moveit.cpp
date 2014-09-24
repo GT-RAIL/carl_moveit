@@ -107,8 +107,14 @@ void CarlMoveIt::moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal)
     armGroup->setStartStateToCurrentState();
     armGroup->setJointValueTarget(jointGoal);
     ROS_INFO("Planning and moving...");
-    armGroup->asyncMove();
-    
+    //armGroup->asyncMove();
+    bool moveSuccess = armGroup->move();
+    ROS_INFO("Finished plan and move");
+    if (moveSuccess)
+      ROS_INFO("Succeeded");
+    else
+      ROS_INFO("Failed");
+    /*
     //Give the planner some time to start trajectory execution
     ros::Duration(2.0).sleep();
     
@@ -129,8 +135,9 @@ void CarlMoveIt::moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal)
       armTrajectoryState = armTrajectoryClient.getState();
     }
     //TODO: End testing
+    */
     
-    result.success = true;
+    result.success = moveSuccess;
   }
   else
   {
