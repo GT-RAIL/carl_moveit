@@ -1,5 +1,5 @@
-#ifndef JACO_ARM_KINEMATICS_H_
-#define JACO_ARM_KINEMATICS_H_
+#ifndef CARL_MOVEIT_H_
+#define CARL_MOVEIT_H_
 
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
@@ -24,29 +24,29 @@ class CarlMoveIt
 public:
 
   CarlMoveIt();
-  
+
   ~CarlMoveIt();
 
   void moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal);
-  
+
   bool ikCallback(carl_moveit::CallIK::Request &req, carl_moveit::CallIK::Response &res);
-  
+
   moveit_msgs::GetPositionIK::Response callIK(geometry_msgs::Pose pose);
 
-  void armJointStatesCallback(const sensor_msgs::JointState& msg);
+  void armJointStatesCallback(const sensor_msgs::JointState &msg);
 
 private:
   ros::NodeHandle n;
   ros::Subscriber armJointStateSubscriber;
   ros::ServiceServer ikServer;
   ros::ServiceClient ikClient;
-  
+
   actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> armTrajectoryClient;
   actionlib::SimpleActionServer<carl_moveit::MoveToPoseAction> moveToPoseServer;
-    
+
   move_group_interface::MoveGroup *armGroup;
   robot_model::RobotModelPtr kinematicModel;
-  
+
   sensor_msgs::JointState jointState;
 };
 

@@ -3,21 +3,21 @@
 using namespace std;
 
 CarlMoveIt::CarlMoveIt() :
-  armTrajectoryClient("jaco_arm/joint_velocity_controller/trajectory"),
-  moveToPoseServer(n, "carl_moveit_wrapper/move_to_pose", boost::bind(&CarlMoveIt::moveToPose, this, _1), false)
+    armTrajectoryClient("jaco_arm/joint_velocity_controller/trajectory"),
+    moveToPoseServer(n, "carl_moveit_wrapper/move_to_pose", boost::bind(&CarlMoveIt::moveToPose, this, _1), false)
 {
   armJointStateSubscriber = n.subscribe("joint_states", 1, &CarlMoveIt::armJointStatesCallback, this);
-  
+
   ikClient = n.serviceClient<moveit_msgs::GetPositionIK>("compute_ik");
-  
+
   robot_model_loader::RobotModelLoader robotModelLoader("robot_description");
   kinematicModel = robotModelLoader.getModel();
   armGroup = new move_group_interface::MoveGroup("arm");
   armGroup->startStateMonitor();
-  
+
   //advertise service
   ikServer = n.advertiseService("carl_moveit_wrapper/call_ik", &CarlMoveIt::ikCallback, this);
-  
+
   //start action server
   moveToPoseServer.start();
 }
@@ -27,15 +27,15 @@ CarlMoveIt::~CarlMoveIt()
   delete armGroup;
 }
 
-void CarlMoveIt::armJointStatesCallback(const sensor_msgs::JointState& msg)
+void CarlMoveIt::armJointStatesCallback(const sensor_msgs::JointState &msg)
 {
   jointState = msg;
 }
 
 /** Adjust angle to equivalent angle on [-pi, pi]
- *  @param angle the angle to be simplified (-inf, inf)
- *  @return the simplified angle on [-pi, pi]
- */
+*  @param angle the angle to be simplified (-inf, inf)
+*  @return the simplified angle on [-pi, pi]
+*/
 static inline double simplify_angle(double angle)
 {
   double previous_rev = floor(angle / (2.0 * M_PI)) * 2.0 * M_PI;
@@ -47,10 +47,10 @@ static inline double simplify_angle(double angle)
 }
 
 /** Calculates nearest desired angle to the current angle
- *  @param desired desired joint angle [-pi, pi]
- *  @param current current angle (-inf, inf)
- *  @return the closest equivalent angle (-inf, inf)
- */
+*  @param desired desired joint angle [-pi, pi]
+*  @param current current angle (-inf, inf)
+*  @return the closest equivalent angle (-inf, inf)
+*/
 static inline double nearest_equivalent(double desired, double current)
 {
   //calculate current number of revolutions
@@ -76,15 +76,15 @@ static inline double nearest_equivalent(double desired, double current)
 void CarlMoveIt::moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal)
 {
   moveit_msgs::GetPositionIK::Response ikRes = callIK(goal->pose);
-  
+
   carl_moveit::MoveToPoseResult result;
   if (ikRes.error_code.val == ikRes.error_code.SUCCESS)
   {
     ROS_INFO("IK service call succeeded");
-    
+
     //extract joint states
     int jacoStartIndex = 0;
-    for (unsigned int i = 0; i < jointState.name.size(); i ++)
+    for (unsigned int i = 0; i < jointState.name.size(); i++)
     {
       if (jointState.name[i].compare("jaco_joint_1") == 0)
       {
@@ -92,13 +92,13 @@ void CarlMoveIt::moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal)
         break;
       }
     }
-    
+
     std::vector<double> jointGoal;
     jointGoal.resize(6);
     //set joints to be closest to current joint positions
-    for (unsigned int i = jacoStartIndex; i <= jacoStartIndex + NUM_JACO_JOINTS; i ++)
+    for (unsigned int i = jacoStartIndex; i <= jacoStartIndex + NUM_JACO_JOINTS; i++)
     {
-      jointGoal[i-jacoStartIndex] = nearest_equivalent(simplify_angle(ikRes.solution.joint_state.position[i]), jointState.position[i]);
+      jointGoal[i - jacoStartIndex] = nearest_equivalent(simplify_angle(ikRes.solution.joint_state.position[i]), jointState.position[i]);
     }
 
     //plan and execute
@@ -136,7 +136,7 @@ void CarlMoveIt::moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal)
     }
     //TODO: End testing
     */
-    
+
     result.success = moveSuccess;
   }
   else
@@ -144,21 +144,21 @@ void CarlMoveIt::moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal)
     ROS_INFO("IK service call failed with error code: %d", ikRes.error_code.val);
     result.success = false;
   }
-  
+
   moveToPoseServer.setSucceeded(result);
 }
 
 bool CarlMoveIt::ikCallback(carl_moveit::CallIK::Request &req, carl_moveit::CallIK::Response &res)
 {
   moveit_msgs::GetPositionIK::Response ikRes = callIK(req.pose);
-  
+
   if (ikRes.error_code.val == ikRes.error_code.SUCCESS)
   {
     ROS_INFO("IK service call succeeded");
-    
+
     //extract joint states
     int jacoStartIndex = 0;
-    for (unsigned int i = 0; i < jointState.name.size(); i ++)
+    for (unsigned int i = 0; i < jointState.name.size(); i++)
     {
       if (jointState.name[i].compare("jaco_joint_1") == 0)
       {
@@ -166,13 +166,13 @@ bool CarlMoveIt::ikCallback(carl_moveit::CallIK::Request &req, carl_moveit::Call
         break;
       }
     }
-    
+
     std::vector<double> joints;
     joints.resize(6);
     //set joints to be closest to current joint positions
-    for (unsigned int i = jacoStartIndex; i <= jacoStartIndex + NUM_JACO_JOINTS; i ++)
+    for (unsigned int i = jacoStartIndex; i <= jacoStartIndex + NUM_JACO_JOINTS; i++)
     {
-      joints[i-jacoStartIndex] = nearest_equivalent(simplify_angle(ikRes.solution.joint_state.position[i]), jointState.position[i]);
+      joints[i - jacoStartIndex] = nearest_equivalent(simplify_angle(ikRes.solution.joint_state.position[i]), jointState.position[i]);
     }
 
     res.jointPositions = joints;
@@ -182,8 +182,8 @@ bool CarlMoveIt::ikCallback(carl_moveit::CallIK::Request &req, carl_moveit::Call
   {
     ROS_INFO("IK service call failed with error code: %d", ikRes.error_code.val);
     res.success = false;
-  }   
-  
+  }
+
   return true;
 }
 
@@ -191,11 +191,11 @@ moveit_msgs::GetPositionIK::Response CarlMoveIt::callIK(geometry_msgs::Pose pose
 {
   moveit_msgs::GetPositionIK::Request ikReq;
   moveit_msgs::GetPositionIK::Response ikRes;
-  
+
   robot_state::RobotStatePtr kinematicState(new robot_state::RobotState(kinematicModel));
-  const robot_state::JointModelGroup* jointModelGroup = kinematicModel->getJointModelGroup("arm");
+  const robot_state::JointModelGroup *jointModelGroup = kinematicModel->getJointModelGroup("arm");
   kinematicState->setVariableValues(jointState);
-  
+
   ikReq.ik_request.group_name = "arm";
   ikReq.ik_request.pose_stamped.header.frame_id = "base_footprint";
   ikReq.ik_request.pose_stamped.pose = pose;

@@ -1,5 +1,4 @@
 <launch>
-
   <include file="$(find carl_moveit)/launch/planning_context.launch" />
 
   <!-- GDB Debug Option -->
@@ -47,15 +46,14 @@
 
     <!-- MoveGroup capabilities to load -->
     <param name="capabilities" value="move_group/MoveGroupCartesianPathService
-				      move_group/MoveGroupExecuteService
-				      move_group/MoveGroupKinematicsService
-				      move_group/MoveGroupMoveAction
-				      move_group/MoveGroupPickPlaceAction
-				      move_group/MoveGroupPlanService
-				      move_group/MoveGroupQueryPlannersService
-				      move_group/MoveGroupStateValidationService
-				      move_group/MoveGroupGetPlanningSceneService
-				      " />
+                                      move_group/MoveGroupExecuteService
+                                      move_group/MoveGroupKinematicsService
+                                      move_group/MoveGroupMoveAction
+                                      move_group/MoveGroupPickPlaceAction
+                                      move_group/MoveGroupPlanService
+                                      move_group/MoveGroupQueryPlannersService
+                                      move_group/MoveGroupStateValidationService
+                                      move_group/MoveGroupGetPlanningSceneService" />
 
     <!-- Publish the planning scene of the physical robot so that rviz plugin can know actual robot -->
     <param name="planning_scene_monitor/publish_planning_scene" value="$(arg publish_monitored_planning_scene)" />
@@ -63,5 +61,4 @@
     <param name="planning_scene_monitor/publish_state_updates" value="$(arg publish_monitored_planning_scene)" />
     <param name="planning_scene_monitor/publish_transforms_updates" value="$(arg publish_monitored_planning_scene)" />
   </node>
-  
 </launch>

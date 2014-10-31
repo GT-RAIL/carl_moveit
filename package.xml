@@ -1,19 +1,17 @@
 <package>
-
   <name>carl_moveit</name>
-  <version>0.2.0</version>
-  <description>
-     An automatically generated package with all the configuration and launch files for using the carl with the MoveIt Motion Planning Framework
-  </description>
-  <author email="assistant@moveit.ros.org">MoveIt Setup Assistant</author>
-  <maintainer email="assistant@moveit.ros.org">MoveIt Setup Assistant</maintainer>
+  <version>0.0.0</version>
+  <description>MoveIt! Configuration and ROS Interface for CARL</description>
+
+  <maintainer email="davidkent@wpi.edu">David Kent</maintainer>
+  <maintainer email="rctoris@wpi.edu">Russell Toris</maintainer>
+  <author email="davidkent@wpi.edu">David Kent</author>
 
   <license>BSD</license>
 
-  <url type="website">http://moveit.ros.org/</url>
-  <url type="bugtracker">https://github.com/ros-planning/moveit_setup_assistant/issues</url>
-  <url type="repository">https://github.com/ros-planning/moveit_setup_assistant</url>
-
+  <url type="website">http://ros.org/wiki/carl_moveit</url>
+  <url type="bugtracker">https://github.com/WPI-RAIL/carl_moveit/issues</url>
+  <url type="repository">https://github.com/WPI-RAIL/carl_moveit</url>
 
   <buildtool_depend>catkin</buildtool_depend>
   
@@ -41,5 +39,4 @@
   <run_depend>roscpp</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>xacro</run_depend>
-
 </package>

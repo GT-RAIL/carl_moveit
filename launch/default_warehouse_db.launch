@@ -1,5 +1,4 @@
 <launch>
-
   <arg name="reset" default="false"/>
 
   <!-- Launch the warehouse with a default database location -->  
@@ -9,5 +8,4 @@
 
   <!-- If we want to reset the database, run this node -->
   <node if="$(arg reset)" name="$(anon moveit_default_db_reset)" type="moveit_init_demo_warehouse" pkg="moveit_ros_warehouse" respawn="false" output="screen" />
-
 </launch>

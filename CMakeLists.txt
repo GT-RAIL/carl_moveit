@@ -1,36 +1,84 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(carl_moveit)
 
+## Find catkin macros and libraries
+## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
+## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs message_generation geometry_msgs cmake_modules roscpp moveit_ros_planning_interface sensor_msgs)
 find_package(Eigen REQUIRED)
 
+#######################################
+## Declare ROS messages and services ##
+#######################################
+
+## Generate services in the 'srv' folder
 add_service_files(
   FILES
   CallIK.srv
 )
 
+## Generate actions in the 'action' folder
 add_action_files(
   FILES
   MoveToPose.action
 )
 
+## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
   actionlib_msgs
   geometry_msgs
 )
 
+###################################################
+## Declare things to be passed to other projects ##
+###################################################
+
+## LIBRARIES: libraries you create in this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also nee
 catkin_package()
 
+###########
+## Build ##
+###########
+
+## Specify additional locations of header files
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN_INCLUDE_DIRS}
 )
 
+## Declare a cpp executable
 add_executable(carl_moveit_wrapper src/carl_moveit.cpp)
+
+## Specify libraries to link a library or executable target against
 target_link_libraries(carl_moveit_wrapper ${catkin_LIBRARIES})
+
 add_dependencies(carl_moveit_wrapper carl_moveit_gencpp)
 
-install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-install(DIRECTORY config DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+#############
+## Install ##
+#############
+
+## Mark executables and/or libraries for installation
+install(TARGETS carl_moveit_wrapper
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+## Copy header files
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
+)
+
+## Copy launch files
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+)
+
+## Copy config files
+install(DIRECTORY config/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config
+)
