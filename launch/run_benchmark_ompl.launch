@@ -1,5 +1,4 @@
 <launch>
-
   <!-- This argument must specify the list of .cfg files to process for benchmarking -->
   <arg name="cfg" />
 
@@ -18,5 +17,4 @@
     <rosparam command="load" file="$(find carl_moveit)/config/kinematics.yaml"/>
     <rosparam command="load" file="$(find carl_moveit)/config/ompl_planning.yaml"/>
   </node>
-
 </launch>

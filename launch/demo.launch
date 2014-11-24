@@ -1,5 +1,4 @@
 <launch>
-
   <!-- By default, we do not start a database (it can be large) -->
   <arg name="db" default="false" />
 
@@ -40,5 +39,4 @@
 
   <!-- If database loading was enabled, start mongodb as well -->
   <include file="$(find carl_moveit)/launch/default_warehouse_db.launch" if="$(arg db)"/>
-
 </launch>

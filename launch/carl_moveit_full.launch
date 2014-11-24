@@ -1,5 +1,4 @@
 <launch>
-
   <!-- By default, we are not in debug mode -->
   <arg name="debug" default="false" />
 
@@ -18,5 +17,4 @@
     <arg name="info" value="true"/>
     <arg name="debug" value="$(arg debug)"/>
   </include>
-
 </launch>
