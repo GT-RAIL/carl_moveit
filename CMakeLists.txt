@@ -4,7 +4,7 @@ project(carl_moveit)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs message_generation geometry_msgs cmake_modules roscpp moveit_ros_planning_interface sensor_msgs control_msgs)
+find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs cmake_modules control_msgs message_generation geometry_msgs roscpp moveit_ros_planning_interface sensor_msgs wpi_jaco_msgs)
 find_package(Eigen REQUIRED)
 
 #######################################
@@ -15,6 +15,7 @@ find_package(Eigen REQUIRED)
 add_service_files(
   FILES
   CallIK.srv
+  CartesianPath.srv
 )
 
 ## Generate actions in the 'action' folder

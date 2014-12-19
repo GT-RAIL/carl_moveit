@@ -1,4 +1,5 @@
 #include <carl_moveit/carl_moveit.h>
+#include <carl_moveit/eigen_pinv.hpp>
 
 using namespace std;
 
@@ -7,15 +8,18 @@ CarlMoveIt::CarlMoveIt() :
     moveToPoseServer(n, "carl_moveit_wrapper/move_to_pose", boost::bind(&CarlMoveIt::moveToPose, this, _1), false)
 {
   armJointStateSubscriber = n.subscribe("joint_states", 1, &CarlMoveIt::armJointStatesCallback, this);
+  cartesianControlSubscriber = n.subscribe("carl_moveit_wrapper/cartesian_control", 1, &CarlMoveIt::cartesianControlCallback, this);
+
+  angularCmdPublisher = n.advertise<wpi_jaco_msgs::AngularCommand>("jaco_arm/angular_cmd", 1);
+  trajectoryVisPublisher = n.advertise<moveit_msgs::DisplayTrajectory>("carl_moveit/computed_trajectory", 1);
 
   ikClient = n.serviceClient<moveit_msgs::GetPositionIK>("compute_ik");
 
-  robot_model_loader::RobotModelLoader robotModelLoader("robot_description");
-  kinematicModel = robotModelLoader.getModel();
   armGroup = new move_group_interface::MoveGroup("arm");
   armGroup->startStateMonitor();
 
   //advertise service
+  cartesianPathServer = n.advertiseService("carl_moveit_wrapper/cartesian_path", &CarlMoveIt::cartesianPathCallback, this);
   ikServer = n.advertiseService("carl_moveit_wrapper/call_ik", &CarlMoveIt::ikCallback, this);
 
   //start action server
@@ -114,28 +118,6 @@ void CarlMoveIt::moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal)
       ROS_INFO("Succeeded");
     else
       ROS_INFO("Failed");
-    /*
-    //Give the planner some time to start trajectory execution
-    ros::Duration(2.0).sleep();
-    
-    //TODO: Test this
-    //if the arm trajectory server is not active, the planner failed
-    actionlib::SimpleClientGoalState armTrajectoryState = armTrajectoryClient.getState();
-    if (armTrajectoryState.isDone())
-    {
-      ROS_INFO("Detected failure to plan an appropriate trajectory.");
-      result.success = false;
-    }
-    
-    //wait for arm trajectory server to reach a terminal state
-    ros::Rate pollRate(30);
-    while (!armTrajectoryState.isDone())
-    {
-      pollRate.sleep();
-      armTrajectoryState = armTrajectoryClient.getState();
-    }
-    //TODO: End testing
-    */
 
     result.success = moveSuccess;
   }
@@ -146,6 +128,91 @@ void CarlMoveIt::moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal)
   }
 
   moveToPoseServer.setSucceeded(result);
+}
+
+bool CarlMoveIt::cartesianPathCallback(carl_moveit::CartesianPath::Request &req, carl_moveit::CartesianPath::Response &res)
+{
+  double eefStep = .05;
+  double  jumpThreshold = 1.5;
+  moveit_msgs::RobotTrajectory finalTraj;
+
+  //calculate trajectory
+  moveit_msgs::RobotTrajectory tempTraj;
+  double completion = armGroup->computeCartesianPath(req.waypoints, eefStep, jumpThreshold, tempTraj, req.avoidCollisions);
+  if (completion == -1)
+  {
+    ROS_INFO("Could not calculate a path.");
+    res.success = false;
+    return true;
+  }
+
+  if (completion == 1.0)
+  {
+    finalTraj = tempTraj;
+  }
+  else
+  {
+    ROS_INFO("Could not find a complete path, varying parameters and recalculating...");
+    //vary jumpThreshold and eefStep
+    for (unsigned int i = 1; i <= 3; i ++)
+    {
+      double newCompletion;
+      jumpThreshold += 1.5;
+      for (unsigned int j = 0; j < 3; j ++)
+      {
+        if (j == 0)
+          eefStep /= 2.0;
+        else
+          eefStep *= 2.0;
+        newCompletion = armGroup->computeCartesianPath(req.waypoints, eefStep, jumpThreshold, tempTraj, req.avoidCollisions);
+        if (newCompletion > completion)
+        {
+          ROS_INFO("Found a better path.");
+          finalTraj = tempTraj;
+          completion = newCompletion;
+          if (newCompletion == 1.0)
+          {
+            ROS_INFO("Found a complete path!");
+            break;
+          }
+        }
+      }
+      if (newCompletion == 1.0)
+        break;
+    }
+  }
+
+  if (completion == 0.0)
+  {
+    ROS_INFO("Could not calculate a path.");
+    res.success = false;
+    return true;
+  }
+  else
+  {
+    res.success = true;
+    res.completion = completion;
+  }
+
+  //display trajectory
+  /*
+  moveit_msgs::DisplayTrajectory trajVis;
+  trajVis.model_id = "carl";
+  trajVis.trajectory.clear();
+  trajVis.trajectory.push_back(finalTraj);
+  moveit::core::robotStateToRobotStateMsg(*(armGroup->getCurrentState()), trajVis.trajectory_start);
+  trajectoryVisPublisher.publish(trajVis);
+  */
+
+  //execute the trajectory
+  move_group_interface::MoveGroup::Plan plan;
+  plan.trajectory_ = finalTraj;
+  moveit::core::robotStateToRobotStateMsg(*(armGroup->getCurrentState()), plan.start_state_);
+  //plan.planning_time_ = 0.0; //does this matter?
+  armGroup->execute(plan);
+
+  res.success = true;
+  return true;
 }
 
 bool CarlMoveIt::ikCallback(carl_moveit::CallIK::Request &req, carl_moveit::CallIK::Response &res)
@@ -192,9 +259,10 @@ moveit_msgs::GetPositionIK::Response CarlMoveIt::callIK(geometry_msgs::Pose pose
   moveit_msgs::GetPositionIK::Request ikReq;
   moveit_msgs::GetPositionIK::Response ikRes;
 
-  robot_state::RobotStatePtr kinematicState(new robot_state::RobotState(kinematicModel));
-  const robot_state::JointModelGroup *jointModelGroup = kinematicModel->getJointModelGroup("arm");
-  kinematicState->setVariableValues(jointState);
+  //robot_state::RobotStatePtr kinematicState(new robot_state::RobotState(kinematicModel));
+  robot_state::RobotStatePtr kinematicState = armGroup->getCurrentState();
+  const robot_state::JointModelGroup *jointModelGroup = kinematicState->getRobotModel()->getJointModelGroup("arm");
+  //kinematicState->setVariableValues(jointState);
 
   ikReq.ik_request.group_name = "arm";
   ikReq.ik_request.pose_stamped.header.frame_id = "base_footprint";
@@ -213,6 +281,49 @@ moveit_msgs::GetPositionIK::Response CarlMoveIt::callIK(geometry_msgs::Pose pose
   return ikRes;
 }
 
+void CarlMoveIt::cartesianControlCallback(const geometry_msgs::Twist &msg)
+{
+  //get the jacobian
+  robot_state::RobotStatePtr kinematicState = armGroup->getCurrentState();
+  const moveit::core::JointModelGroup* jointModelGroup = kinematicState->getRobotModel()->getJointModelGroup("arm");
+  Eigen::Vector3d referencePointPosition(0.0, 0.0, 0.0);  //what does this do?
+  Eigen::MatrixXd jacobian;
+  kinematicState->getJacobian(jointModelGroup, kinematicState->getLinkModel(jointModelGroup->getLinkModelNames().back()), referencePointPosition, jacobian);
+
+  //calculate the jacobian pseudoinverse
+
+  //Method 1: SVD
+  Eigen::MatrixXd pInv = EIGEN_PINV::pinv(jacobian, 0.001);
+
+
+  //Method 2: Permuting the jacobian's main diagonal
+  /*
+  Eigen::MatrixXd pInv;
+  float val = .001;
+  Eigen::MatrixXd permutedJacobian = jacobian + val*Eigen::MatrixXd::Identity(6, 6);
+  pInv = permutedJacobian.inverse();
+  */
+
+  //calculate joint velocities
+  Eigen::VectorXd twist(6);
+  twist << msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.x, msg.angular.y, msg.angular.z;
+  Eigen::VectorXd jointVel(6);
+  jointVel = pInv * twist;
+
+  //publish joint velocity command to the arm
+  wpi_jaco_msgs::AngularCommand cmd;
+  cmd.position = false;
+  cmd.armCommand = true;
+  cmd.fingerCommand = false;
+  cmd.repeat = true;
+  cmd.joints.resize(6);
+  for(unsigned int i = 0; i < jointVel.size(); i ++)
+  {
+    cmd.joints[i] = jointVel[i];
+  }
+  angularCmdPublisher.publish(cmd);
+}
+
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "carl_moveit_wrapper");
@@ -221,4 +332,3 @@ int main(int argc, char **argv)
 
   ros::spin();
 }
-
