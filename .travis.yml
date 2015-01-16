@@ -32,9 +32,11 @@ install:
   - git clone https://github.com/RIVeR-Lab/wpi_jaco.git
   - git clone https://github.com/WPI-RAIL/rail_segmentation.git
   - git clone https://github.com/WPI-RAIL/rail_pick_and_place.git
-  - git clone https://github.com/ros-perception/perception_pcl.git
   - git clone https://github.com/sniekum/ar_track_alvar_msgs.git
-  - cd ../
+  - git clone https://github.com/ros-perception/perception_pcl.git
+  - cd perception_pcl
+  - git checkout tags/1.2.3
+  - cd ../../
   - rosdep install --from-paths src --ignore-src --rosdistro hydro -y
 
 script:
