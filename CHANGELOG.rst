@@ -2,6 +2,13 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.4 (2015-01-16)
+------------------
+* Launched carl_moveit_wrapper with full launch file
+* Update .travis.yml
+* Added Cartesian path planning, experimental Cartesian control using a Jacobian pseudoinverse, and some general cleanup
+* Contributors: David Kent
+
 0.0.3 (2014-12-02)
 ------------------
 * Merge pull request #1 from WPI-RAIL/master
