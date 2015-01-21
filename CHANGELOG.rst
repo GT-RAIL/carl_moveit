@@ -2,6 +2,16 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.5 (2015-01-21)
+------------------
+* Merge branch 'develop' of github.com:WPI-RAIL/carl_moveit into develop
+* Tuned jump threshold for Cartesian movement
+* Update .travis.yml
+* Update .travis.yml
+* Update .travis.yml
+* Update .travis.yml
+* Contributors: David Kent, Russell Toris
+
 0.0.4 (2015-01-16)
 ------------------
 * Launched carl_moveit_wrapper with full launch file
