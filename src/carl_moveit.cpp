@@ -154,10 +154,11 @@ bool CarlMoveIt::cartesianPathCallback(carl_moveit::CartesianPath::Request &req,
   {
     ROS_INFO("Could not find a complete path, varying parameters and recalculating...");
     //vary jumpThreshold and eefStep
-    for (unsigned int i = 1; i <= 3; i ++)
+    for (unsigned int i = 0; i < 2; i ++)
     {
       double newCompletion;
-      jumpThreshold += 1.5;
+      if (i != 0)
+        jumpThreshold += 1.5;
       for (unsigned int j = 0; j < 3; j ++)
       {
         if (j == 0)
