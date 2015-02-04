@@ -5,7 +5,8 @@ using namespace std;
 
 CarlMoveIt::CarlMoveIt() :
     armTrajectoryClient("jaco_arm/joint_velocity_controller/trajectory"),
-    moveToPoseServer(n, "carl_moveit_wrapper/move_to_pose", boost::bind(&CarlMoveIt::moveToPose, this, _1), false)
+    moveToPoseServer(n, "carl_moveit_wrapper/move_to_pose", boost::bind(&CarlMoveIt::moveToPose, this, _1), false),
+    moveToJointPoseServer(n, "carl_moveit_wrapper/move_to_joint_pose", boost::bind(&CarlMoveIt::moveToJointPose, this, _1), false)
 {
   armJointStateSubscriber = n.subscribe("joint_states", 1, &CarlMoveIt::armJointStatesCallback, this);
   cartesianControlSubscriber = n.subscribe("carl_moveit_wrapper/cartesian_control", 1, &CarlMoveIt::cartesianControlCallback, this);
@@ -24,6 +25,7 @@ CarlMoveIt::CarlMoveIt() :
 
   //start action server
   moveToPoseServer.start();
+  moveToJointPoseServer.start();
 }
 
 CarlMoveIt::~CarlMoveIt()
@@ -100,14 +102,17 @@ void CarlMoveIt::moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal)
     std::vector<double> jointGoal;
     jointGoal.resize(6);
     //set joints to be closest to current joint positions
-    for (unsigned int i = jacoStartIndex; i <= jacoStartIndex + NUM_JACO_JOINTS; i++)
+    for (unsigned int i = jacoStartIndex; i < jacoStartIndex + NUM_JACO_JOINTS; i++)
     {
       jointGoal[i - jacoStartIndex] = nearest_equivalent(simplify_angle(ikRes.solution.joint_state.position[i]), jointState.position[i]);
     }
 
     //plan and execute
     armGroup->setPlannerId("arm[KPIECEkConfigDefault]");
-    armGroup->setPlanningTime(5.0);
+    if (goal->planningTime == 0.0)
+      armGroup->setPlanningTime(5.0);
+    else
+      armGroup->setPlanningTime(goal->planningTime);
     armGroup->setStartStateToCurrentState();
     armGroup->setJointValueTarget(jointGoal);
     ROS_INFO("Planning and moving...");
@@ -128,6 +133,49 @@ void CarlMoveIt::moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal)
   }
 
   moveToPoseServer.setSucceeded(result);
+}
+
+void CarlMoveIt::moveToJointPose(const carl_moveit::MoveToJointPoseGoalConstPtr &goal)
+{
+  //extract joint states
+  int jacoStartIndex = 0;
+  for (unsigned int i = 0; i < jointState.name.size(); i++)
+  {
+    if (jointState.name[i].compare("jaco_joint_1") == 0)
+    {
+      jacoStartIndex = i;
+      break;
+    }
+  }
+
+  vector<double> jointGoal;
+  jointGoal.resize(NUM_JACO_JOINTS);
+  //set joints to be closest to current joint positions
+  for (unsigned int i = jacoStartIndex; i < jacoStartIndex + NUM_JACO_JOINTS; i++)
+  {
+    jointGoal[i - jacoStartIndex] = nearest_equivalent(simplify_angle(goal->joints[i - jacoStartIndex]), jointState.position[i]);
+  }
+
+  //plan and execute
+  carl_moveit::MoveToJointPoseResult result;
+  armGroup->setPlannerId("arm[KPIECEkConfigDefault]");
+  if (goal->planningTime == 0.0)
+    armGroup->setPlanningTime(5.0);
+  else
+    armGroup->setPlanningTime(goal->planningTime);
+  armGroup->setStartStateToCurrentState();
+  armGroup->setJointValueTarget(jointGoal);
+  ROS_INFO("Planning and moving...");
+  //armGroup->asyncMove();
+  bool moveSuccess = armGroup->move();
+  if (moveSuccess)
+    ROS_INFO("Plan and move succeeded");
+  else
+    ROS_INFO("Plan and move failed");
+
+  result.success = moveSuccess;
+
+  moveToJointPoseServer.setSucceeded(result);
 }
 
 bool CarlMoveIt::cartesianPathCallback(carl_moveit::CartesianPath::Request &req, carl_moveit::CartesianPath::Response &res)

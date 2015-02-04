@@ -21,6 +21,7 @@ add_service_files(
 ## Generate actions in the 'action' folder
 add_action_files(
   FILES
+  MoveToJointPose.action
   MoveToPose.action
 )
 
@@ -53,11 +54,14 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(carl_moveit_wrapper src/carl_moveit.cpp)
+add_executable(common_actions src/common_actions.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(carl_moveit_wrapper ${catkin_LIBRARIES})
+target_link_libraries(common_actions ${catkin_LIBRARIES})
 
 add_dependencies(carl_moveit_wrapper carl_moveit_gencpp)
+add_dependencies(common_actions carl_moveit_gencpp)
 
 #############
 ## Install ##

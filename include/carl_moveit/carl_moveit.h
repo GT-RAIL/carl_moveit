@@ -6,6 +6,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <carl_moveit/CallIK.h>
 #include <carl_moveit/CartesianPath.h>
+#include <carl_moveit/MoveToJointPoseAction.h>
 #include <carl_moveit/MoveToPoseAction.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <moveit/robot_state/conversions.h>
@@ -44,6 +45,7 @@ private:
 
   actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> armTrajectoryClient;
   actionlib::SimpleActionServer<carl_moveit::MoveToPoseAction> moveToPoseServer;
+  actionlib::SimpleActionServer<carl_moveit::MoveToJointPoseAction> moveToJointPoseServer;
 
   move_group_interface::MoveGroup *armGroup;
   //robot_model::RobotModelPtr kinematicModel;
@@ -51,6 +53,8 @@ private:
   sensor_msgs::JointState jointState;
 
   void moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal);
+
+  void moveToJointPose(const carl_moveit::MoveToJointPoseGoalConstPtr &goal);
 
   bool cartesianPathCallback(carl_moveit::CartesianPath::Request &req, carl_moveit::CartesianPath::Response &res);
 
