@@ -20,4 +20,7 @@
 
   <!-- Run the wrapper node -->
   <node pkg="carl_moveit" name="carl_moveit_wrapper" type="carl_moveit_wrapper" output="screen"/>
+
+  <!-- Run the common actions node -->
+  <node pkg="carl_moveit" name="carl_moveit_common_actions" type="common_actions"/>
 </launch>
