@@ -2,8 +2,8 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.6 (2015-02-06)
+------------------
 * Updated launch file; changed preempted ready action behavior
 * Common motion planning actions, such as readying and retracting the JACO arm
 * Contributors: David Kent
