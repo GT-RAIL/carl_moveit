@@ -5,6 +5,8 @@
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
 #include <carl_moveit/MoveToJointPoseAction.h>
+#include <std_srvs/Empty.h>
+#include <wpi_jaco_msgs/GetAngularPosition.h>
 #include <wpi_jaco_msgs/HomeArmAction.h>
 
 #define NUM_JACO_JOINTS 6
@@ -19,6 +21,9 @@ public:
 private:
   ros::NodeHandle n;
   ros::Publisher angularCmdPublisher;
+
+  ros::ServiceClient eraseTrajectoriesClient;
+  ros::ServiceClient jacoPosClient;
 
   actionlib::SimpleActionClient<carl_moveit::MoveToJointPoseAction> moveToJointPoseClient;
   actionlib::SimpleActionServer<wpi_jaco_msgs::HomeArmAction> readyArmServer;
