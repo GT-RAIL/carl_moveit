@@ -2,6 +2,12 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.6 (2015-02-06)
+------------------
+* Updated launch file; changed preempted ready action behavior
+* Common motion planning actions, such as readying and retracting the JACO arm
+* Contributors: David Kent
+
 0.0.5 (2015-01-21)
 ------------------
 * Merge branch 'develop' of github.com:WPI-RAIL/carl_moveit into develop
