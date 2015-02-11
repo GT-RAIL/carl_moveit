@@ -16,6 +16,9 @@ class CommonActions
 
 public:
 
+  /**
+  * \brief Constructor
+  */
   CommonActions();
 
 private:
@@ -30,6 +33,14 @@ private:
 
   std::vector<float> homePosition;
 
+  /**
+  * \brief Move arm to the home position with obstacle avoidance
+  *
+  * Action server to move the arm to the ready (JACO home) position, optionally followed by a move to a retracted
+  * position.
+  *
+  * @param goal Ready/retract action goal.
+  */
   void readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal);
 };
 
