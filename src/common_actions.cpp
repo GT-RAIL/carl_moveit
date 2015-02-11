@@ -52,8 +52,10 @@ void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
       if (readyArmServer.isPreemptRequested() || !ros::ok())
       {
         ROS_INFO("Ready arm action preempted.");
+        moveToJointPoseClient.cancelAllGoals();
         result.success = false;
         readyArmServer.setPreempted(result);
+        return;
       }
     }
 
