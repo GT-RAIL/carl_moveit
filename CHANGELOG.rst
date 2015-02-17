@@ -2,6 +2,15 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.7 (2015-02-17)
+------------------
+* Documentation
+* Common action preemtion during retract
+* Merge branch 'develop' of github.com:WPI-RAIL/carl_moveit into develop
+* Common action preempting
+* Update .travis.yml
+* Contributors: David Kent, Russell Toris
+
 0.0.6 (2015-02-06)
 ------------------
 * Updated launch file; changed preempted ready action behavior
