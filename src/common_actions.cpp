@@ -26,9 +26,17 @@ CommonActions::CommonActions() :
 
 void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
 {
-  ROS_INFO("Ready callback");
-  carl_moveit::MoveToJointPoseGoal jointPoseGoal;
   wpi_jaco_msgs::HomeArmResult result;
+
+  if (goal->retract)
+  {
+    isArmRetracted(goal->retractPosition.joints);
+    result.success = true;
+    readyArmServer.setSucceeded(result);
+    return;
+  }
+
+  carl_moveit::MoveToJointPoseGoal jointPoseGoal;
 
   vector<float> baseJointPoseGoal;
   baseJointPoseGoal.resize(homePosition.size());
@@ -109,22 +117,7 @@ void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
       }
 
       //check if arm is retracted
-      float dstFromRetract = 0;
-      //get joint positions
-      wpi_jaco_msgs::GetAngularPosition::Request req;
-      wpi_jaco_msgs::GetAngularPosition::Response res;
-      if(!jacoPosClient.call(req, res))
-      {
-        ROS_INFO("Could not call Jaco joint position service.");
-        result.success = false;
-        return;
-      }
-      for (unsigned int i = 0; i < 6; i ++)
-      {
-        dstFromRetract += fabs(goal->retractPosition.joints[i] - res.pos[i]);
-      }
-      if (dstFromRetract > 0.175)
-        retracted = true;
+      retracted = isArmRetracted(goal->retractPosition.joints);
 
       //check for timeout
       ros::Time currentTime = ros::Time::now();
@@ -143,6 +136,29 @@ void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
 
   result.success = succeeded;
   readyArmServer.setSucceeded(result);
+}
+
+bool CommonActions::isArmRetracted(const vector<float> &retractPos)
+{
+  float dstFromRetract = 0;
+
+  //get joint positions
+  wpi_jaco_msgs::GetAngularPosition::Request req;
+  wpi_jaco_msgs::GetAngularPosition::Response res;
+  if(!jacoPosClient.call(req, res))
+  {
+    ROS_INFO("Could not call Jaco joint position service.");
+    return false;
+  }
+
+  for (unsigned int i = 0; i < retractPos.size(); i ++)
+  {
+    dstFromRetract += fabs(retractPos[i] - res.pos[i]);
+  }
+
+  if (dstFromRetract > 0.175)
+    return false;
+  return true;
 }
 
 int main(int argc, char **argv)

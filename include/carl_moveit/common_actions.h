@@ -42,6 +42,8 @@ private:
   * @param goal Ready/retract action goal.
   */
   void readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal);
+
+  bool isArmRetracted(const std::vector<float> &retractPos);
 };
 
 #endif
