@@ -32,6 +32,7 @@ void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
   {
     if (isArmRetracted(goal->retractPosition.joints))
     {
+      ROS_INFO("Arm is already retracted.");
       result.success = true;
       readyArmServer.setSucceeded(result);
       return;
