@@ -117,14 +117,18 @@ void CarlMoveIt::moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal)
     armGroup->setJointValueTarget(jointGoal);
     ROS_INFO("Planning and moving...");
     //armGroup->asyncMove();
-    bool moveSuccess = armGroup->move();
+    move_group_interface::MoveItErrorCode errorCode = armGroup->move();
     ROS_INFO("Finished plan and move");
-    if (moveSuccess)
+    if (errorCode == moveit_msgs::MoveItErrorCodes::SUCCESS)
+    {
       ROS_INFO("Succeeded");
+      result.success = true;
+    }
     else
-      ROS_INFO("Failed");
-
-    result.success = moveSuccess;
+    {
+      ROS_INFO("Failed with MoveIt error code: %d", errorCode.val);
+      result.success = false;
+    }
   }
   else
   {
