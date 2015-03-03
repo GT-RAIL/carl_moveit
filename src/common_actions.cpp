@@ -30,10 +30,12 @@ void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
 
   if (goal->retract)
   {
-    isArmRetracted(goal->retractPosition.joints);
-    result.success = true;
-    readyArmServer.setSucceeded(result);
-    return;
+    if (isArmRetracted(goal->retractPosition.joints))
+    {
+      result.success = true;
+      readyArmServer.setSucceeded(result);
+      return;
+    }
   }
 
   carl_moveit::MoveToJointPoseGoal jointPoseGoal;
