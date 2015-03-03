@@ -83,6 +83,7 @@ void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
     ROS_INFO("Plan and move to ready position failed.");
     result.success = false;
     readyArmServer.setSucceeded(result);
+    return;
   }
 
   if (goal->retract)
