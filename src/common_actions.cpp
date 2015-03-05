@@ -23,6 +23,7 @@ CommonActions::CommonActions() :
   jacoPosClient = n.serviceClient<wpi_jaco_msgs::GetAngularPosition>("jaco_arm/get_angular_position");
 
   //start action server
+  liftServer.start();
   readyArmServer.start();
 }
 
