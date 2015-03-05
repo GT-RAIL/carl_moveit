@@ -68,7 +68,7 @@ add_dependencies(common_actions carl_moveit_gencpp)
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS carl_moveit_wrapper
+install(TARGETS carl_moveit_wrapper common_actions
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
