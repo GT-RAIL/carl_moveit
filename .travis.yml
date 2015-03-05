@@ -31,6 +31,7 @@ install:
   - git clone https://github.com/WPI-RAIL/m4atx_battery_monitor.git
   - git clone https://github.com/RIVeR-Lab/wpi_jaco.git
   - git clone https://github.com/WPI-RAIL/carl_safety.git
+  - git clone https://github.com/WPI-RAIL/rail_manipulation_msgs.git
   - git clone https://github.com/WPI-RAIL/rail_segmentation.git
   - git clone https://github.com/WPI-RAIL/rail_pick_and_place.git
   - git clone https://github.com/sniekum/ar_track_alvar_msgs.git
