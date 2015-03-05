@@ -4,6 +4,7 @@ using namespace std;
 
 CommonActions::CommonActions() :
     moveToJointPoseClient("carl_moveit_wrapper/move_to_joint_pose"),
+    liftServer(n, "carl_moveit_wrapper/common_actions/lift", boost::bind(&CommonActions::liftArm, this, _1), false),
     readyArmServer(n, "carl_moveit_wrapper/common_actions/ready_arm", boost::bind(&CommonActions::readyArm, this, _1), false)
 {
   //setup home position
@@ -18,6 +19,7 @@ CommonActions::CommonActions() :
   angularCmdPublisher = n.advertise<wpi_jaco_msgs::AngularCommand>("jaco_arm/angular_cmd", 1);
 
   eraseTrajectoriesClient = n.serviceClient<std_srvs::Empty>("jaco_arm/erase_trajectories");
+  cartesianPathClient = n.serviceClient<carl_moveit::CartesianPath>("carl_moveit_wrapper/cartesian_path");
   jacoPosClient = n.serviceClient<wpi_jaco_msgs::GetAngularPosition>("jaco_arm/get_angular_position");
 
   //start action server
@@ -139,6 +141,37 @@ void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
 
   result.success = succeeded;
   readyArmServer.setSucceeded(result);
+}
+
+void CommonActions::liftArm(const rail_manipulation_msgs::LiftGoalConstPtr &goal)
+{
+  rail_manipulation_msgs::LiftResult result;
+
+  carl_moveit::CartesianPath srv;
+  tf::StampedTransform currentHandTransform;
+  tfListener.waitForTransform("jaco_link_hand", "base_footprint", ros::Time::now(), ros::Duration(1.0));
+  tfListener.lookupTransform("base_footprint", "jaco_link_hand", ros::Time(0), currentHandTransform);
+  geometry_msgs::Pose liftPose;
+  liftPose.position.x = currentHandTransform.getOrigin().x();
+  liftPose.position.y = currentHandTransform.getOrigin().y();
+  liftPose.position.z = currentHandTransform.getOrigin().z() + .1;
+  liftPose.orientation.x = currentHandTransform.getRotation().x();
+  liftPose.orientation.y = currentHandTransform.getRotation().y();
+  liftPose.orientation.z = currentHandTransform.getRotation().z();
+  liftPose.orientation.w = currentHandTransform.getRotation().w();
+  srv.request.waypoints.push_back(liftPose);
+  srv.request.avoidCollisions = false;
+
+  if (!cartesianPathClient.call(srv))
+  {
+    ROS_INFO("Could not call Jaco Cartesian path service.");
+    result.success = false;
+    liftServer.setAborted(result, "Could not call Jaco Cartesian path service.");
+    return;
+  }
+
+  result.success = srv.response.success;
+  liftServer.setSucceeded(result);
 }
 
 bool CommonActions::isArmRetracted(const vector<float> &retractPos)
