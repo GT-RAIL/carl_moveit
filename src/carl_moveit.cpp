@@ -312,7 +312,7 @@ bool CarlMoveIt::ikCallback(carl_moveit::CallIK::Request &req, carl_moveit::Call
   return true;
 }
 
-moveit_msgs::GetPositionIK::Response CarlMoveIt::callIK(geometry_msgs::Pose pose)
+moveit_msgs::GetPositionIK::Response CarlMoveIt::callIK(geometry_msgs::PoseStamped pose)
 {
   moveit_msgs::GetPositionIK::Request ikReq;
   moveit_msgs::GetPositionIK::Response ikRes;
@@ -323,8 +323,7 @@ moveit_msgs::GetPositionIK::Response CarlMoveIt::callIK(geometry_msgs::Pose pose
   //kinematicState->setVariableValues(jointState);
 
   ikReq.ik_request.group_name = "arm";
-  ikReq.ik_request.pose_stamped.header.frame_id = "base_footprint";
-  ikReq.ik_request.pose_stamped.pose = pose;
+  ikReq.ik_request.pose_stamped = pose;
   ikReq.ik_request.ik_link_name = "jaco_link_hand";
   //seed state
   ikReq.ik_request.robot_state.joint_state.name = jointModelGroup->getJointModelNames();

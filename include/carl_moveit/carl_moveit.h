@@ -60,7 +60,7 @@ private:
 
   bool ikCallback(carl_moveit::CallIK::Request &req, carl_moveit::CallIK::Response &res);
 
-  moveit_msgs::GetPositionIK::Response callIK(geometry_msgs::Pose pose);
+  moveit_msgs::GetPositionIK::Response callIK(geometry_msgs::PoseStamped pose);
 
   void armJointStatesCallback(const sensor_msgs::JointState &msg);
 

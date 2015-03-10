@@ -1,4 +1,4 @@
-geometry_msgs/Pose pose   # End-effector pose goal for planning
+geometry_msgs/PoseStamped pose   # End-effector pose goal for planning
 float32 planningTime      # Maximum planning time, defaults to 5 seconds if unset
 ---
 bool success  # True on successful planning and execution
