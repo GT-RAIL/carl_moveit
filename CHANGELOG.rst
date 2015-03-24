@@ -2,6 +2,23 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.8 (2015-03-24)
+------------------
+* Updated IK and MoveToPose to use stamped poses instead of base_footprint frame poses
+* Removed run dependency on moveit visualization
+* Update CMakeLists.txt
+* Update .travis.yml
+* lift server start
+* Planning-based hand lift
+* Output message when arm is already retracted
+* retract bug fix
+* Added check if arm is already retracted before performing a home->retract action
+* Cancel retract if home fails
+* Better failure detection on joint pose goal planning and moving
+* Merge branch 'develop' of github.com:WPI-RAIL/carl_moveit into develop
+* Error code debugging on failed moveToPose
+* Contributors: David Kent, Russell Toris
+
 0.0.7 (2015-02-17)
 ------------------
 * Documentation
