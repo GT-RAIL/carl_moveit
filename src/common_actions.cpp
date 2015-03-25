@@ -5,7 +5,7 @@ using namespace std;
 CommonActions::CommonActions() :
     moveToJointPoseClient("carl_moveit_wrapper/move_to_joint_pose"),
     liftServer(n, "carl_moveit_wrapper/common_actions/lift", boost::bind(&CommonActions::liftArm, this, _1), false),
-    readyArmServer(n, "carl_moveit_wrapper/common_actions/ready_arm", boost::bind(&CommonActions::readyArm, this, _1), false)
+    armServer(n, "carl_moveit_wrapper/common_actions/arm_action", boost::bind(&CommonActions::executeArmAction, this, _1), false)
 {
   //setup home position
   homePosition.resize(NUM_JACO_JOINTS);
@@ -16,6 +16,14 @@ CommonActions::CommonActions() :
   homePosition[4] = 1.626;
   homePosition[5] = 1.393;
 
+  defaultRetractPosition.resize(NUM_JACO_JOINTS);
+  defaultRetractPosition[0] = -2.57;
+  defaultRetractPosition[1] = 1.39;
+  defaultRetractPosition[2] = .527;
+  defaultRetractPosition[3] = -.084;
+  defaultRetractPosition[4] = .515;
+  defaultRetractPosition[5] = -1.745;
+
   angularCmdPublisher = n.advertise<wpi_jaco_msgs::AngularCommand>("jaco_arm/angular_cmd", 1);
 
   eraseTrajectoriesClient = n.serviceClient<std_srvs::Empty>("jaco_arm/erase_trajectories");
@@ -24,20 +32,20 @@ CommonActions::CommonActions() :
 
   //start action server
   liftServer.start();
-  readyArmServer.start();
+  armServer.start();
 }
 
-void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
+void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
 {
-  wpi_jaco_msgs::HomeArmResult result;
+  carl_moveit::ArmResult result;
 
-  if (goal->retract)
+  if (goal->action == carl_moveit::ArmGoal::RETRACT)
   {
-    if (isArmRetracted(goal->retractPosition.joints))
+    if (isArmRetracted(defaultRetractPosition))
     {
       ROS_INFO("Arm is already retracted.");
       result.success = true;
-      readyArmServer.setSucceeded(result);
+      armServer.setSucceeded(result);
       return;
     }
   }
@@ -57,7 +65,7 @@ void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
   }
   bool succeeded = false;
   int counter = 0;
-  int attempts = max((int)(goal->numAttempts), 1);
+  int attempts = MAX_HOME_ATTEMPTS;
   while (!succeeded && counter < attempts)
   {
     ROS_INFO("Ready arm attempt %d", counter);
@@ -66,12 +74,12 @@ void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
     ROS_INFO("Moving arm to ready position...");
     while (!moveToJointPoseClient.getState().isDone())
     {
-      if (readyArmServer.isPreemptRequested() || !ros::ok())
+      if (armServer.isPreemptRequested() || !ros::ok())
       {
         ROS_INFO("Ready arm action preempted.");
         moveToJointPoseClient.cancelAllGoals();
         result.success = false;
-        readyArmServer.setPreempted(result);
+        armServer.setPreempted(result);
         return;
       }
     }
@@ -96,20 +104,26 @@ void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
   {
     ROS_INFO("Plan and move to ready position failed.");
     result.success = false;
-    readyArmServer.setSucceeded(result);
+    armServer.setSucceeded(result);
     return;
   }
 
-  if (goal->retract)
+  if (goal->action == carl_moveit::ArmGoal::RETRACT)
   {
-    angularCmdPublisher.publish(goal->retractPosition);
+    wpi_jaco_msgs::AngularCommand cmd;
+    cmd.armCommand = true;
+    cmd.fingerCommand = false;
+    cmd.position = true;
+    cmd.repeat = false;
+    cmd.joints = defaultRetractPosition;
+    angularCmdPublisher.publish(cmd);
     ros::Time startTime = ros::Time::now();
     ros::Rate loopRate(30);
     bool retracted = false;
     while (!retracted)
     {
       //check for preempt
-      if (readyArmServer.isPreemptRequested() || !ros::ok())
+      if (armServer.isPreemptRequested() || !ros::ok())
       {
         ROS_INFO("Ready arm action preempted.");
         std_srvs::Empty srv;
@@ -118,12 +132,12 @@ void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
           ROS_INFO("Could not call erase trajectories service...");
         }
         result.success = false;
-        readyArmServer.setPreempted(result);
+        armServer.setPreempted(result);
         return;
       }
 
       //check if arm is retracted
-      retracted = isArmRetracted(goal->retractPosition.joints);
+      retracted = isArmRetracted(defaultRetractPosition);
 
       //check for timeout
       ros::Time currentTime = ros::Time::now();
@@ -131,7 +145,7 @@ void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
       {
         ROS_INFO("Ready arm timed out.");
         result.success = false;
-        readyArmServer.setSucceeded(result);
+        armServer.setSucceeded(result);
         return;
       }
       loopRate.sleep();
@@ -141,7 +155,7 @@ void CommonActions::readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal)
   ROS_INFO("Ready arm finished.");
 
   result.success = succeeded;
-  readyArmServer.setSucceeded(result);
+  armServer.setSucceeded(result);
 }
 
 void CommonActions::liftArm(const rail_manipulation_msgs::LiftGoalConstPtr &goal)

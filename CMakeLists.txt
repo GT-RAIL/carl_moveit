@@ -23,6 +23,7 @@ add_action_files(
   FILES
   MoveToJointPose.action
   MoveToPose.action
+  Arm.action
 )
 
 ## Generate added messages and services with any dependencies listed here

@@ -6,14 +6,16 @@
 #include <actionlib/client/simple_action_client.h>
 #include <carl_moveit/CartesianPath.h>
 #include <carl_moveit/MoveToJointPoseAction.h>
+#include <carl_moveit/ArmAction.h>
 #include <rail_manipulation_msgs/LiftAction.h>
 #include <std_srvs/Empty.h>
 #include <tf/transform_listener.h>
+#include <wpi_jaco_msgs/AngularCommand.h>
 #include <wpi_jaco_msgs/GetAngularPosition.h>
 #include <wpi_jaco_msgs/GetCartesianPosition.h>
-#include <wpi_jaco_msgs/HomeArmAction.h>
 
 #define NUM_JACO_JOINTS 6
+#define MAX_HOME_ATTEMPTS 3
 
 class CommonActions
 {
@@ -35,11 +37,12 @@ private:
 
   actionlib::SimpleActionClient<carl_moveit::MoveToJointPoseAction> moveToJointPoseClient;
   actionlib::SimpleActionServer<rail_manipulation_msgs::LiftAction> liftServer;
-  actionlib::SimpleActionServer<wpi_jaco_msgs::HomeArmAction> readyArmServer;
+  actionlib::SimpleActionServer<carl_moveit::ArmAction> armServer;
 
   tf::TransformListener tfListener;
 
   std::vector<float> homePosition;
+  std::vector<float> defaultRetractPosition;
 
   /**
   * \brief Move arm to the home position with obstacle avoidance
@@ -49,7 +52,7 @@ private:
   *
   * @param goal Ready/retract action goal.
   */
-  void readyArm(const wpi_jaco_msgs::HomeArmGoalConstPtr &goal);
+  void executeArmAction(const carl_moveit::ArmGoalConstPtr &goal);
 
   void liftArm(const rail_manipulation_msgs::LiftGoalConstPtr &goal);
 
