@@ -2,6 +2,12 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.9 (2015-03-27)
+------------------
+* Merge branch 'develop' of github.com:WPI-RAIL/carl_moveit into develop
+* Changed the ready arm action to a general arm actions server which can currently either READY or RETRACT the arm
+* Contributors: David Kent
+
 0.0.8 (2015-03-24)
 ------------------
 * Updated IK and MoveToPose to use stamped poses instead of base_footprint frame poses
