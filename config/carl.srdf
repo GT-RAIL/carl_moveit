@@ -16,6 +16,7 @@
         <joint name="jaco_joint_4" />
         <joint name="jaco_joint_5" />
         <joint name="jaco_joint_6" />
+        <joint name="grasp_joint" />
     </group>
     <group name="gripper">
         <link name="jaco_link_finger_1" />

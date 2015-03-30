@@ -87,7 +87,7 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
   gripperClient.waitForResult(ros::Duration(10.0));
   if (!gripperClient.getResult()->success)
   {
-    ROS_INFO("Moving to approach angle failed.");
+    ROS_INFO("Opening gripper failed.");
     result.success = false;
     pickupServer.setAborted(result, "Unable to open gripper.");
     return;
@@ -100,7 +100,10 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
   pickupServer.publishFeedback(feedback);
 
   carl_moveit::CartesianPath srv;
-  srv.request.waypoints.push_back(graspPose.pose);
+  geometry_msgs::PoseStamped cartesianPose;
+  cartesianPose.header.frame_id = "base_footprint";
+  tfListener.transformPose("base_footprint", graspPose, cartesianPose);
+  srv.request.waypoints.push_back(cartesianPose.pose);
   srv.request.avoidCollisions = false;
   if (!cartesianPathClient.call(srv))
   {
@@ -121,7 +124,7 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
   gripperClient.waitForResult(ros::Duration(10.0));
   if (!gripperClient.getResult()->success)
   {
-    ROS_INFO("Moving to approach angle failed.");
+    ROS_INFO("Closing gripper failed.");
     result.success = false;
     pickupServer.setAborted(result, "Unable to close gripper.");
     return;
