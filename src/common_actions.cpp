@@ -9,7 +9,7 @@ CommonActions::CommonActions() :
     liftClient("carl_moveit_wrapper/common_actions/lift"),
     liftServer(n, "carl_moveit_wrapper/common_actions/lift", boost::bind(&CommonActions::liftArm, this, _1), false),
     armServer(n, "carl_moveit_wrapper/common_actions/arm_action", boost::bind(&CommonActions::executeArmAction, this, _1), false),
-    pickupServer(n, "carl_moveit_wrapper/common_actions/pickup_action", boost::bind(&CommonActions::executePickup, this, _1), false)
+    pickupServer(n, "carl_moveit_wrapper/common_actions/pickup", boost::bind(&CommonActions::executePickup, this, _1), false)
 {
   //setup home position
   homePosition.resize(NUM_JACO_JOINTS);
