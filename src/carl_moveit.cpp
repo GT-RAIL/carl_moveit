@@ -324,7 +324,7 @@ moveit_msgs::GetPositionIK::Response CarlMoveIt::callIK(geometry_msgs::PoseStamp
 
   ikReq.ik_request.group_name = "arm";
   ikReq.ik_request.pose_stamped = pose;
-  ikReq.ik_request.ik_link_name = "jaco_link_hand";
+  ikReq.ik_request.ik_link_name = "jaco_link_eef";
   //seed state
   ikReq.ik_request.robot_state.joint_state.name = jointModelGroup->getJointModelNames();
   kinematicState->copyJointGroupPositions(jointModelGroup, ikReq.ik_request.robot_state.joint_state.position);

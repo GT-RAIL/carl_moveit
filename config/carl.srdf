@@ -51,7 +51,7 @@
         <joint name="jaco_joint_6" value="1.694" />
     </group_state>
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
-    <end_effector name="eef" parent_link="jaco_link_hand" group="gripper" />
+    <end_effector name="eef" parent_link="jaco_link_eef" group="gripper" />
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
     <!--<virtual_joint name="virtual_joint" type="planar" parent_frame="odom_combined" child_link="base_footprint" />-->
     <!--PASSIVE JOINT: Purpose: this element is used to mark joints that are not actuated-->

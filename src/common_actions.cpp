@@ -4,8 +4,12 @@ using namespace std;
 
 CommonActions::CommonActions() :
     moveToJointPoseClient("carl_moveit_wrapper/move_to_joint_pose"),
+    moveToPoseClient("carl_moveit_wrapper/move_to_pose"),
+    gripperClient("jaco_arm/manipulation/gripper"),
+    liftClient("carl_moveit_wrapper/common_actions/lift"),
     liftServer(n, "carl_moveit_wrapper/common_actions/lift", boost::bind(&CommonActions::liftArm, this, _1), false),
-    armServer(n, "carl_moveit_wrapper/common_actions/arm_action", boost::bind(&CommonActions::executeArmAction, this, _1), false)
+    armServer(n, "carl_moveit_wrapper/common_actions/arm_action", boost::bind(&CommonActions::executeArmAction, this, _1), false),
+    pickupServer(n, "carl_moveit_wrapper/common_actions/pickup_action", boost::bind(&CommonActions::executePickup, this, _1), false)
 {
   //setup home position
   homePosition.resize(NUM_JACO_JOINTS);
@@ -33,6 +37,111 @@ CommonActions::CommonActions() :
   //start action server
   liftServer.start();
   armServer.start();
+  pickupServer.start();
+}
+
+void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
+{
+  carl_moveit::PickupFeedback feedback;
+  carl_moveit::PickupResult result;
+  stringstream ss;
+
+  //make sure pose is in the end effector frame
+  geometry_msgs::PoseStamped graspPose, approachAnglePose;
+  graspPose.header.frame_id = "jaco_link_eef";
+  if (goal->pose.header.frame_id != "jaco_link_eef")
+    tfListener.transformPose("jaco_link_eef", goal->pose, graspPose);
+  else
+    graspPose = goal->pose;
+
+  approachAnglePose = graspPose;
+  approachAnglePose.pose.position.x -= 0.1; //move the gripper back 10 cm along the grasp approach angle
+
+  //move to approach angle
+  ss.str("");
+  ss << "Moving gripper to approach angle...";
+  feedback.message = ss.str();
+  pickupServer.publishFeedback(feedback);
+
+  carl_moveit::MoveToPoseGoal approachAngleGoal;
+  approachAngleGoal.pose = approachAnglePose;
+  moveToPoseClient.sendGoal(approachAngleGoal);
+  moveToPoseClient.waitForResult(ros::Duration(30.0));
+  if (!moveToPoseClient.getResult()->success)
+  {
+    ROS_INFO("Moving to approach angle failed.");
+    result.success = false;
+    pickupServer.setAborted(result, "Unable to move to appraoch angle.");
+    return;
+  }
+
+  //open gripper
+  ss.str("");
+  ss << "Opening gripper...";
+  feedback.message = ss.str();
+  pickupServer.publishFeedback(feedback);
+
+  rail_manipulation_msgs::GripperGoal gripperGoal;
+  gripperGoal.close = false;
+  gripperClient.sendGoal(gripperGoal);
+  gripperClient.waitForResult(ros::Duration(10.0));
+  if (!gripperClient.getResult()->success)
+  {
+    ROS_INFO("Moving to approach angle failed.");
+    result.success = false;
+    pickupServer.setAborted(result, "Unable to open gripper.");
+    return;
+  }
+
+  //follow approach angle to grasp
+  ss.str("");
+  ss << "Moving along approach angle...";
+  feedback.message = ss.str();
+  pickupServer.publishFeedback(feedback);
+
+  carl_moveit::CartesianPath srv;
+  srv.request.waypoints.push_back(graspPose.pose);
+  srv.request.avoidCollisions = false;
+  if (!cartesianPathClient.call(srv))
+  {
+    ROS_INFO("Could not call Jaco Cartesian path service.");
+    result.success = false;
+    pickupServer.setAborted(result, "Could not call Jaco Cartesian path service.");
+    return;
+  }
+
+  //close gripper
+  ss.str("");
+  ss << "Closing gripper...";
+  feedback.message = ss.str();
+  pickupServer.publishFeedback(feedback);
+
+  gripperGoal.close = true;
+  gripperClient.sendGoal(gripperGoal);
+  gripperClient.waitForResult(ros::Duration(10.0));
+  if (!gripperClient.getResult()->success)
+  {
+    ROS_INFO("Moving to approach angle failed.");
+    result.success = false;
+    pickupServer.setAborted(result, "Unable to close gripper.");
+    return;
+  }
+
+  if (goal->lift)
+  {
+    //lift hand
+    ss.str("");
+    ss << "Lifting hand...";
+    feedback.message = ss.str();
+    pickupServer.publishFeedback(feedback);
+
+    rail_manipulation_msgs::LiftGoal liftGoal;
+    liftClient.sendGoal(liftGoal);
+    liftClient.waitForResult(ros::Duration(10.0));
+  }
+
+  result.success = true;
+  pickupServer.setSucceeded(result);
 }
 
 void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
@@ -163,17 +272,17 @@ void CommonActions::liftArm(const rail_manipulation_msgs::LiftGoalConstPtr &goal
   rail_manipulation_msgs::LiftResult result;
 
   carl_moveit::CartesianPath srv;
-  tf::StampedTransform currentHandTransform;
-  tfListener.waitForTransform("jaco_link_hand", "base_footprint", ros::Time::now(), ros::Duration(1.0));
-  tfListener.lookupTransform("base_footprint", "jaco_link_hand", ros::Time(0), currentHandTransform);
+  tf::StampedTransform currentEefTransform;
+  tfListener.waitForTransform("jaco_link_eef", "base_footprint", ros::Time::now(), ros::Duration(1.0));
+  tfListener.lookupTransform("base_footprint", "jaco_link_eef", ros::Time(0), currentEefTransform);
   geometry_msgs::Pose liftPose;
-  liftPose.position.x = currentHandTransform.getOrigin().x();
-  liftPose.position.y = currentHandTransform.getOrigin().y();
-  liftPose.position.z = currentHandTransform.getOrigin().z() + .1;
-  liftPose.orientation.x = currentHandTransform.getRotation().x();
-  liftPose.orientation.y = currentHandTransform.getRotation().y();
-  liftPose.orientation.z = currentHandTransform.getRotation().z();
-  liftPose.orientation.w = currentHandTransform.getRotation().w();
+  liftPose.position.x = currentEefTransform.getOrigin().x();
+  liftPose.position.y = currentEefTransform.getOrigin().y();
+  liftPose.position.z = currentEefTransform.getOrigin().z() + .1;
+  liftPose.orientation.x = currentEefTransform.getRotation().x();
+  liftPose.orientation.y = currentEefTransform.getRotation().y();
+  liftPose.orientation.z = currentEefTransform.getRotation().z();
+  liftPose.orientation.w = currentEefTransform.getRotation().w();
   srv.request.waypoints.push_back(liftPose);
   srv.request.avoidCollisions = false;
 
