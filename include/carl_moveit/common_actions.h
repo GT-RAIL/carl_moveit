@@ -61,10 +61,28 @@ private:
   */
   void executeArmAction(const carl_moveit::ArmGoalConstPtr &goal);
 
+  /**
+  * \brief Perform a pickup action
+  *
+  * A pickup action with CARL consists of sequentially executing the following actions: move to approach angle,
+  * open gripper, move along approach angle to the grasp pose, close gripper, optionally lift the object, and
+  * optionally verify that it is in-hand.
+  *
+  * @param goal Grasp pose with which to execute the pickup
+  */
   void executePickup(const carl_moveit::PickupGoalConstPtr &goal);
 
+  /**
+  * \brief Raise the hand vertically by 10 cm
+  * @param goal empty goal
+  */
   void liftArm(const rail_manipulation_msgs::LiftGoalConstPtr &goal);
 
+  /**
+  * \brief determine if the arm is currently retracted in a given retracted position
+  * @param retractPos vector of joint states the make up a retracted position
+  * @return true if the arm is retracted, false otherwise
+  */
   bool isArmRetracted(const std::vector<float> &retractPos);
 };
 
