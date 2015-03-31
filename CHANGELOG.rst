@@ -2,6 +2,14 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.10 (2015-03-31)
+-------------------
+* Minor action renaming
+* Updated method documentation
+* Added grasp_joint to the arm planning group, bugfixes on pickup trajectory execution
+* Added pickup action, changed end effector link to use jaco_link_eef instead of jaco_link_hand
+* Contributors: David Kent
+
 0.0.9 (2015-03-27)
 ------------------
 * Merge branch 'develop' of github.com:WPI-RAIL/carl_moveit into develop
