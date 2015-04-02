@@ -20,6 +20,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/JointState.h>
+#include <std_msgs/Bool.h>
+#include <std_srvs/Empty.h>
 #include <wpi_jaco_msgs/AngularCommand.h>
 
 #define NUM_JACO_JOINTS 6
@@ -37,11 +39,13 @@ private:
   ros::NodeHandle n;
   ros::Subscriber armJointStateSubscriber;
   ros::Subscriber cartesianControlSubscriber;
+  ros::Subscriber armHomedSubscriber;
   ros::Publisher angularCmdPublisher;
   ros::Publisher trajectoryVisPublisher;
   ros::ServiceServer cartesianPathServer;
   ros::ServiceServer ikServer;
   ros::ServiceClient ikClient;
+  ros::ServiceClient clearOctomapClient;
 
   actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> armTrajectoryClient;
   actionlib::SimpleActionServer<carl_moveit::MoveToPoseAction> moveToPoseServer;
@@ -65,6 +69,8 @@ private:
   void armJointStatesCallback(const sensor_msgs::JointState &msg);
 
   void cartesianControlCallback(const geometry_msgs::Twist &msg);
+
+  void armHomedCallback(const std_msgs::Bool &msg);
 };
 
 #endif

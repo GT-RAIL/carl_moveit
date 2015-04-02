@@ -10,11 +10,13 @@ CarlMoveIt::CarlMoveIt() :
 {
   armJointStateSubscriber = n.subscribe("joint_states", 1, &CarlMoveIt::armJointStatesCallback, this);
   cartesianControlSubscriber = n.subscribe("carl_moveit_wrapper/cartesian_control", 1, &CarlMoveIt::cartesianControlCallback, this);
+  armHomedSubscriber = n.subscribe("jaco_arm/arm_homed", 1, &CarlMoveIt::armHomedCallback, this);
 
   angularCmdPublisher = n.advertise<wpi_jaco_msgs::AngularCommand>("jaco_arm/angular_cmd", 1);
   trajectoryVisPublisher = n.advertise<moveit_msgs::DisplayTrajectory>("carl_moveit/computed_trajectory", 1);
 
   ikClient = n.serviceClient<moveit_msgs::GetPositionIK>("compute_ik");
+  clearOctomapClient = n.serviceClient<std_srvs::Empty>("clear_octomap");
 
   armGroup = new move_group_interface::MoveGroup("arm");
   armGroup->startStateMonitor();
@@ -31,6 +33,18 @@ CarlMoveIt::CarlMoveIt() :
 CarlMoveIt::~CarlMoveIt()
 {
   delete armGroup;
+}
+
+void CarlMoveIt::armHomedCallback(const std_msgs::Bool &msg)
+{
+  if (msg.data)
+  {
+    std_srvs::Empty srv;
+    if (!clearOctomapClient.call(srv))
+      ROS_INFO("Failed to call clear octomap service.");
+    else
+      ROS_INFO("Cleared octomap.");
+  }
 }
 
 void CarlMoveIt::armJointStatesCallback(const sensor_msgs::JointState &msg)
