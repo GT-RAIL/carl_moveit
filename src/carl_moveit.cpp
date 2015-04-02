@@ -42,8 +42,6 @@ void CarlMoveIt::armHomedCallback(const std_msgs::Bool &msg)
     std_srvs::Empty srv;
     if (!clearOctomapClient.call(srv))
       ROS_INFO("Failed to call clear octomap service.");
-    else
-      ROS_INFO("Cleared octomap.");
   }
 }
 
