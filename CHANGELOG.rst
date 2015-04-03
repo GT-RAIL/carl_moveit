@@ -2,6 +2,13 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.11 (2015-04-03)
+-------------------
+* Removed some unnecessary output
+* Clear octomap after the jaco arm homes using the kinova api
+* Enabled clear_octomap service
+* Contributors: David Kent
+
 0.0.10 (2015-03-31)
 -------------------
 * Minor action renaming
