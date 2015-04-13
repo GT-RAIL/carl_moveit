@@ -15,10 +15,12 @@
 #include <moveit/robot_model_loader/robot_model_loader.h>
 #include <moveit/robot_model/robot_model.h>
 #include <moveit/robot_state/robot_state.h>
+#include <moveit_msgs/CollisionObject.h>
 #include <moveit_msgs/DisplayTrajectory.h>
 #include <moveit_msgs/GetPositionIK.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
+#include <rail_manipulation_msgs/SegmentedObjectList.h>
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Bool.h>
 #include <std_srvs/Empty.h>
@@ -40,6 +42,7 @@ private:
   ros::Subscriber armJointStateSubscriber;
   ros::Subscriber cartesianControlSubscriber;
   ros::Subscriber armHomedSubscriber;
+  ros::Subscriber recognizedObjectsSubscriber;
   ros::Publisher angularCmdPublisher;
   ros::Publisher trajectoryVisPublisher;
   ros::ServiceServer cartesianPathServer;
@@ -52,9 +55,12 @@ private:
   actionlib::SimpleActionServer<carl_moveit::MoveToJointPoseAction> moveToJointPoseServer;
 
   move_group_interface::MoveGroup *armGroup;
+  move_group_interface::PlanningSceneInterface *planningSceneInterface;
   //robot_model::RobotModelPtr kinematicModel;
 
   sensor_msgs::JointState jointState;
+
+  string attachedObject;  //the name of the object (in the planning scene) attached to the robot
 
   void moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal);
 
@@ -71,6 +77,8 @@ private:
   void cartesianControlCallback(const geometry_msgs::Twist &msg);
 
   void armHomedCallback(const std_msgs::Bool &msg);
+
+  void recognizedObjectsCallback(const rail_manipulation_msgs::SegmentedObjectList &msg);
 };
 
 #endif

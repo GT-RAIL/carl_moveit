@@ -8,9 +8,12 @@ CarlMoveIt::CarlMoveIt() :
     moveToPoseServer(n, "carl_moveit_wrapper/move_to_pose", boost::bind(&CarlMoveIt::moveToPose, this, _1), false),
     moveToJointPoseServer(n, "carl_moveit_wrapper/move_to_joint_pose", boost::bind(&CarlMoveIt::moveToJointPose, this, _1), false)
 {
+  attachedObject = "";
+
   armJointStateSubscriber = n.subscribe("joint_states", 1, &CarlMoveIt::armJointStatesCallback, this);
   cartesianControlSubscriber = n.subscribe("carl_moveit_wrapper/cartesian_control", 1, &CarlMoveIt::cartesianControlCallback, this);
   armHomedSubscriber = n.subscribe("jaco_arm/arm_homed", 1, &CarlMoveIt::armHomedCallback, this);
+  recognizedObjectsSubscriber = n.subscribe("rail_recognition/recognized_objects", 1, &CarlMoveIt::recognizedObjectsCallback, this);
 
   angularCmdPublisher = n.advertise<wpi_jaco_msgs::AngularCommand>("jaco_arm/angular_cmd", 1);
   trajectoryVisPublisher = n.advertise<moveit_msgs::DisplayTrajectory>("carl_moveit/computed_trajectory", 1);
@@ -20,6 +23,8 @@ CarlMoveIt::CarlMoveIt() :
 
   armGroup = new move_group_interface::MoveGroup("arm");
   armGroup->startStateMonitor();
+
+  planningSceneInterface = new move_group_interface::PlanningSceneInterface();
 
   //advertise service
   cartesianPathServer = n.advertiseService("carl_moveit_wrapper/cartesian_path", &CarlMoveIt::cartesianPathCallback, this);
@@ -33,6 +38,7 @@ CarlMoveIt::CarlMoveIt() :
 CarlMoveIt::~CarlMoveIt()
 {
   delete armGroup;
+  delete planningSceneInterface;
 }
 
 void CarlMoveIt::armHomedCallback(const std_msgs::Bool &msg)
@@ -391,6 +397,55 @@ void CarlMoveIt::cartesianControlCallback(const geometry_msgs::Twist &msg)
     cmd.joints[i] = jointVel[i];
   }
   angularCmdPublisher.publish(cmd);
+}
+
+void CarlMoveIt::recognizedObjectsCallback(const rail_manipulation_msgs::SegmentedObjectList &msg)
+{
+  //remove previously detected collision objects
+  vector<string> previousObjects = planningSceneInterface->getKnownObjectNames();
+  if (attachedObject != "")
+  {
+    //don't remove the attached object
+    for (unsigned int i = 0; i < previousObjects.size(); i ++)
+    {
+      if (previousObjects[i] == attachedObject)
+      {
+        previousObjects.erase(previousObjects.begin() + i);
+        break;
+      }
+    }
+  }
+  planningSceneInterface->removeCollisionObjects(previousObjects);
+
+  if (!msg.objects.empty())
+  {
+    //add all objects to the planning scene
+    vector<moveit_msgs::CollisionObject> collisionObjects;
+    collisionObjects.resize(msg.objects.size());
+    for (unsigned int i = 0; i < collisionObjects.size(); i++)
+    {
+      //create collision object
+      collisionObjects[i].header.frame_id = msg.objects[i].point_cloud.header.frame_id;
+      stringstream ss;
+      ss << "object" << i;
+      collisionObjects[i].id = ss.str();
+
+      //set object shape
+      shape_msgs::SolidPrimitive boundingVolume;
+      boundingVolume.type = shape_msgs::SolidPrimitive::BOX;
+      boundingVolume.dimensions.resize(3);
+      boundingVolume.dimensions[shape_msgs::SolidPrimitive::BOX_X] = msg.objects[i].width;
+      boundingVolume.dimensions[shape_msgs::SolidPrimitive::BOX_Y] = msg.objects[i].depth;
+      boundingVolume.dimensions[shape_msgs::SolidPrimitive::BOX_Z] = msg.objects[i].height;
+      collisionObjects[i].primitives.push_back(boundingVolume);
+      geometry_msgs::Pose pose;
+      pose.orientation.z = 1.0;
+      collisionObjects[i].primitive_poses.push_back(pose);
+      collisionObjects[i].operation = moveit_msgs::CollisionObject::ADD;
+    }
+
+    planningSceneInterface->addCollisionObjects(collisionObjects);
+  }
 }
 
 int main(int argc, char **argv)
