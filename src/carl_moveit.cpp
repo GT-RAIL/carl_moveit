@@ -13,7 +13,7 @@ CarlMoveIt::CarlMoveIt() :
   armJointStateSubscriber = n.subscribe("joint_states", 1, &CarlMoveIt::armJointStatesCallback, this);
   cartesianControlSubscriber = n.subscribe("carl_moveit_wrapper/cartesian_control", 1, &CarlMoveIt::cartesianControlCallback, this);
   armHomedSubscriber = n.subscribe("jaco_arm/arm_homed", 1, &CarlMoveIt::armHomedCallback, this);
-  recognizedObjectsSubscriber = n.subscribe("rail_recognition/recognized_objects", 1, &CarlMoveIt::recognizedObjectsCallback, this);
+  recognizedObjectsSubscriber = n.subscribe("object_recognition_listener/recognized_objects", 1, &CarlMoveIt::recognizedObjectsCallback, this);
 
   angularCmdPublisher = n.advertise<wpi_jaco_msgs::AngularCommand>("jaco_arm/angular_cmd", 1);
   trajectoryVisPublisher = n.advertise<moveit_msgs::DisplayTrajectory>("carl_moveit/computed_trajectory", 1);
@@ -439,6 +439,9 @@ void CarlMoveIt::recognizedObjectsCallback(const rail_manipulation_msgs::Segment
       boundingVolume.dimensions[shape_msgs::SolidPrimitive::BOX_Z] = msg.objects[i].height;
       collisionObjects[i].primitives.push_back(boundingVolume);
       geometry_msgs::Pose pose;
+      pose.position.x = msg.objects[i].centroid.x;
+      pose.position.y = msg.objects[i].centroid.y;
+      pose.position.z = msg.objects[i].centroid.z;
       pose.orientation.z = 1.0;
       collisionObjects[i].primitive_poses.push_back(pose);
       collisionObjects[i].operation = moveit_msgs::CollisionObject::ADD;
