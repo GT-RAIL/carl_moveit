@@ -60,7 +60,7 @@ private:
 
   sensor_msgs::JointState jointState;
 
-  string attachedObject;  //the name of the object (in the planning scene) attached to the robot
+  std::string attachedObject;  //the name of the object (in the planning scene) attached to the robot
 
   void moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal);
 
