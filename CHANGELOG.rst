@@ -2,6 +2,13 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.12 (2015-04-14)
+-------------------
+* Scene object adjustment
+* bug fix
+* moveit planning scene collision object test
+* Contributors: David Kent
+
 0.0.11 (2015-04-03)
 -------------------
 * Removed some unnecessary output
