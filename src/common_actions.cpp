@@ -33,6 +33,8 @@ CommonActions::CommonActions() :
   eraseTrajectoriesClient = n.serviceClient<std_srvs::Empty>("jaco_arm/erase_trajectories");
   cartesianPathClient = n.serviceClient<carl_moveit::CartesianPath>("carl_moveit_wrapper/cartesian_path");
   jacoPosClient = n.serviceClient<wpi_jaco_msgs::GetAngularPosition>("jaco_arm/get_angular_position");
+  attachClosestObjectClient = n.serviceClient<std_srvs::Empty>("carl_moveit_wrapper/attach_closest_object");
+  detachObjectsClient = n.serviceClient<std_srvs::Empty>("carl_moveit_wrapper/detach_objects");
 
   //start action server
   liftServer.start();
@@ -128,6 +130,13 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
     result.success = false;
     pickupServer.setAborted(result, "Unable to close gripper.");
     return;
+  }
+
+  //attach scene object to gripper
+  std_srvs::Empty emptySrv;
+  if (!attachClosestObjectClient.call(emptySrv))
+  {
+    ROS_INFO("No scene object to attach...");
   }
 
   if (goal->lift)

@@ -37,6 +37,8 @@ private:
   ros::ServiceClient eraseTrajectoriesClient;
   ros::ServiceClient cartesianPathClient;
   ros::ServiceClient jacoPosClient;
+  ros::ServiceClient attachClosestObjectClient;
+  ros::ServiceClient detachObjectsClient;
 
   actionlib::SimpleActionClient<carl_moveit::MoveToJointPoseAction> moveToJointPoseClient;
   actionlib::SimpleActionClient<carl_moveit::MoveToPoseAction> moveToPoseClient;
