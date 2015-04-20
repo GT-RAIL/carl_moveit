@@ -549,8 +549,15 @@ bool CarlMoveIt::attachClosestSceneObject(std_srvs::Empty::Request &req, std_srv
     }
   }
 
-  //TODO: Populate touchLinks
   vector<string> touchLinks;
+  touchLinks.push_back("jaco_link_eef");
+  touchLinks.push_back("jaco_link_finger_1");
+  touchLinks.push_back("jaco_link_finger_2");
+  touchLinks.push_back("jaco_link_finger_3");
+  touchLinks.push_back("jaco_link_finger_tip_1");
+  touchLinks.push_back("jaco_link_finger_tip_2");
+  touchLinks.push_back("jaco_link_finger_tip_3");
+  touchLinks.push_back("jaco_link_hand");
   armGroup->attachObject(unattachedObjects[closest], armGroup->getEndEffectorLink(), touchLinks);
   attachedObjects.push_back(unattachedObjects[closest]);
   unattachedObjects.erase(unattachedObjects.begin() + closest);
