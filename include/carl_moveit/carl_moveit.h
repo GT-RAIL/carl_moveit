@@ -40,6 +40,7 @@
 #include <pcl/common/transforms.h>
 
 #define NUM_JACO_JOINTS 6
+#define SCENE_OBJECT_DST_THRESHOLD .2
 
 class CarlMoveIt
 {

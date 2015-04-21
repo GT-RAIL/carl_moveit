@@ -547,6 +547,12 @@ bool CarlMoveIt::attachClosestSceneObject(std_srvs::Empty::Request &req, std_srv
         }
       }
     }
+
+    if (min > SCENE_OBJECT_DST_THRESHOLD)
+    {
+      ROS_INFO("No scene objects are close enough to the end effector to be attached.");
+      return true;
+    }
   }
 
   vector<string> touchLinks;
