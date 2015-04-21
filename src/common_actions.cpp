@@ -63,26 +63,9 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
   tfBroadcaster.sendTransform(tf::StampedTransform(graspTransform, now, "base_footprint", "grasp_frame"));
   tfListener.waitForTransform("grasp_frame", "base_footprint", now, ros::Duration(5.0));
 
-  //TODO: set approach angle pose as -.1 on the x from the grasp_frame
   approachAnglePose.header.frame_id = "grasp_frame";
   approachAnglePose.pose.position.x = -0.1;
   approachAnglePose.pose.orientation.w = 1.0;
-
-  //approachAnglePose.header.frame_id = "base_footprint";
-  //tfListener.transformPose("base_footprint", tempApproachAnglePose, approachAnglePose);
-
-  /*
-  //make sure pose is in the end effector frame
-  geometry_msgs::PoseStamped graspPose, approachAnglePose;
-  graspPose.header.frame_id = "jaco_link_eef";
-  if (goal->pose.header.frame_id != "jaco_link_eef")
-    tfListener.transformPose("jaco_link_eef", goal->pose, graspPose);
-  else
-    graspPose = goal->pose;
-
-  approachAnglePose = graspPose;
-  approachAnglePose.pose.position.x -= 0.1; //move the gripper back 10 cm along the grasp approach angle
-  */
 
   //move to approach angle
   ss.str("");
