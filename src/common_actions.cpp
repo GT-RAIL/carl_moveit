@@ -33,6 +33,8 @@ CommonActions::CommonActions() :
   eraseTrajectoriesClient = n.serviceClient<std_srvs::Empty>("jaco_arm/erase_trajectories");
   cartesianPathClient = n.serviceClient<carl_moveit::CartesianPath>("carl_moveit_wrapper/cartesian_path");
   jacoPosClient = n.serviceClient<wpi_jaco_msgs::GetAngularPosition>("jaco_arm/get_angular_position");
+  attachClosestObjectClient = n.serviceClient<std_srvs::Empty>("carl_moveit_wrapper/attach_closest_object");
+  detachObjectsClient = n.serviceClient<std_srvs::Empty>("carl_moveit_wrapper/detach_objects");
 
   //start action server
   liftServer.start();
@@ -46,16 +48,24 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
   carl_moveit::PickupResult result;
   stringstream ss;
 
-  //make sure pose is in the end effector frame
+  //make sure pose is in the base_footprint frame
   geometry_msgs::PoseStamped graspPose, approachAnglePose;
-  graspPose.header.frame_id = "jaco_link_eef";
-  if (goal->pose.header.frame_id != "jaco_link_eef")
-    tfListener.transformPose("jaco_link_eef", goal->pose, graspPose);
+  graspPose.header.frame_id = "base_footprint";
+  if (goal->pose.header.frame_id != "base_footprint")
+    tfListener.transformPose("base_footprint", goal->pose, graspPose);
   else
     graspPose = goal->pose;
 
-  approachAnglePose = graspPose;
-  approachAnglePose.pose.position.x -= 0.1; //move the gripper back 10 cm along the grasp approach angle
+  tf::Transform graspTransform;
+  graspTransform.setOrigin(tf::Vector3(goal->pose.pose.position.x, goal->pose.pose.position.y, goal->pose.pose.position.z));
+  graspTransform.setRotation(tf::Quaternion(goal->pose.pose.orientation.x, goal->pose.pose.orientation.y, goal->pose.pose.orientation.z, goal->pose.pose.orientation.w));
+  ros::Time now = ros::Time::now();
+  tfBroadcaster.sendTransform(tf::StampedTransform(graspTransform, now, "base_footprint", "grasp_frame"));
+  tfListener.waitForTransform("grasp_frame", "base_footprint", now, ros::Duration(5.0));
+
+  approachAnglePose.header.frame_id = "grasp_frame";
+  approachAnglePose.pose.position.x = -0.1;
+  approachAnglePose.pose.orientation.w = 1.0;
 
   //move to approach angle
   ss.str("");
@@ -128,6 +138,13 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
     result.success = false;
     pickupServer.setAborted(result, "Unable to close gripper.");
     return;
+  }
+
+  //attach scene object to gripper
+  std_srvs::Empty emptySrv;
+  if (!attachClosestObjectClient.call(emptySrv))
+  {
+    ROS_INFO("No scene object to attach...");
   }
 
   if (goal->lift)

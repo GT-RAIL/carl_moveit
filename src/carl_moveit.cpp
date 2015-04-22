@@ -4,12 +4,11 @@
 using namespace std;
 
 CarlMoveIt::CarlMoveIt() :
+    tfListener(tfBuffer),
     armTrajectoryClient("jaco_arm/joint_velocity_controller/trajectory"),
     moveToPoseServer(n, "carl_moveit_wrapper/move_to_pose", boost::bind(&CarlMoveIt::moveToPose, this, _1), false),
     moveToJointPoseServer(n, "carl_moveit_wrapper/move_to_joint_pose", boost::bind(&CarlMoveIt::moveToJointPose, this, _1), false)
 {
-  attachedObject = "";
-
   armJointStateSubscriber = n.subscribe("joint_states", 1, &CarlMoveIt::armJointStatesCallback, this);
   cartesianControlSubscriber = n.subscribe("carl_moveit_wrapper/cartesian_control", 1, &CarlMoveIt::cartesianControlCallback, this);
   armHomedSubscriber = n.subscribe("jaco_arm/arm_homed", 1, &CarlMoveIt::armHomedCallback, this);
@@ -29,6 +28,8 @@ CarlMoveIt::CarlMoveIt() :
   //advertise service
   cartesianPathServer = n.advertiseService("carl_moveit_wrapper/cartesian_path", &CarlMoveIt::cartesianPathCallback, this);
   ikServer = n.advertiseService("carl_moveit_wrapper/call_ik", &CarlMoveIt::ikCallback, this);
+  attachObjectServer = n.advertiseService("carl_moveit_wrapper/attach_closest_object", &CarlMoveIt::attachClosestSceneObject, this);
+  detachObjectServer = n.advertiseService("carl_moveit_wrapper/detach_objects", &CarlMoveIt::detatchSceneObjects, this);
 
   //start action server
   moveToPoseServer.start();
@@ -402,53 +403,184 @@ void CarlMoveIt::cartesianControlCallback(const geometry_msgs::Twist &msg)
 void CarlMoveIt::recognizedObjectsCallback(const rail_manipulation_msgs::SegmentedObjectList &msg)
 {
   //remove previously detected collision objects
+  unattachedObjects.clear();  //clear list of unattached scene object names
   vector<string> previousObjects = planningSceneInterface->getKnownObjectNames();
-  if (attachedObject != "")
+  if (!attachedObjects.empty())
   {
     //don't remove the attached object
     for (unsigned int i = 0; i < previousObjects.size(); i ++)
     {
-      if (previousObjects[i] == attachedObject)
+      for (unsigned int j = 0; j < attachedObjects.size(); j ++)
+      if (previousObjects[i] == attachedObjects[j])
       {
         previousObjects.erase(previousObjects.begin() + i);
+        i --;
         break;
       }
     }
   }
   planningSceneInterface->removeCollisionObjects(previousObjects);
 
-  if (!msg.objects.empty())
   {
-    //add all objects to the planning scene
-    vector<moveit_msgs::CollisionObject> collisionObjects;
-    collisionObjects.resize(msg.objects.size());
-    for (unsigned int i = 0; i < collisionObjects.size(); i++)
-    {
-      //create collision object
-      collisionObjects[i].header.frame_id = msg.objects[i].point_cloud.header.frame_id;
-      stringstream ss;
-      ss << "object" << i;
-      collisionObjects[i].id = ss.str();
+    boost::recursive_mutex::scoped_lock lock(api_mutex); //lock for the stored objects array
 
-      //set object shape
-      shape_msgs::SolidPrimitive boundingVolume;
-      boundingVolume.type = shape_msgs::SolidPrimitive::BOX;
-      boundingVolume.dimensions.resize(3);
-      boundingVolume.dimensions[shape_msgs::SolidPrimitive::BOX_X] = msg.objects[i].width;
-      boundingVolume.dimensions[shape_msgs::SolidPrimitive::BOX_Y] = msg.objects[i].depth;
-      boundingVolume.dimensions[shape_msgs::SolidPrimitive::BOX_Z] = msg.objects[i].height;
-      collisionObjects[i].primitives.push_back(boundingVolume);
-      geometry_msgs::Pose pose;
-      pose.position.x = msg.objects[i].centroid.x;
-      pose.position.y = msg.objects[i].centroid.y;
-      pose.position.z = msg.objects[i].centroid.z;
-      pose.orientation.z = 1.0;
-      collisionObjects[i].primitive_poses.push_back(pose);
-      collisionObjects[i].operation = moveit_msgs::CollisionObject::ADD;
+    //store objects
+    objectList = msg;
+
+    if (!msg.objects.empty())
+    {
+      //add all objects to the planning scene
+      vector<moveit_msgs::CollisionObject> collisionObjects;
+      collisionObjects.resize(msg.objects.size());
+      for (unsigned int i = 0; i < collisionObjects.size(); i++)
+      {
+        //create collision object
+        collisionObjects[i].header.frame_id = msg.objects[i].point_cloud.header.frame_id;
+        stringstream ss;
+        if (msg.objects[i].recognized)
+          ss << msg.objects[i].name << i;
+        else
+          ss << "object" << i;
+        //check for name collisions
+        for (unsigned int j = 0; j < attachedObjects.size(); j ++)
+        {
+          if (ss.str() == attachedObjects[j])
+            ss << "(2)";
+        }
+        collisionObjects[i].id = ss.str();
+        unattachedObjects.push_back(ss.str());
+
+        //TODO: try computing convex hull to use as collision geometry, compare results to oriented bounding box
+        //convert point cloud to pcl point cloud
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr objectCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::PCLPointCloud2 converter;
+        pcl_conversions::toPCL(msg.objects[i].point_cloud, converter);
+        pcl::fromPCLPointCloud2(converter, *objectCloud);
+
+        // compute principal direction
+        Eigen::Matrix3f covariance;
+        Eigen::Vector4f centroid;
+        centroid[0] = msg.objects[i].centroid.x;
+        centroid[1] = msg.objects[i].centroid.y;
+        centroid[2] = msg.objects[i].centroid.z;
+        pcl::computeCovarianceMatrixNormalized(*objectCloud, centroid, covariance);
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance, Eigen::ComputeEigenvectors);
+        Eigen::Matrix3f eig_dx = eigen_solver.eigenvectors();
+        eig_dx.col(2) = eig_dx.col(0).cross(eig_dx.col(1));
+
+        //move the points to that reference frame
+        Eigen::Matrix4f p2w(Eigen::Matrix4f::Identity());
+        p2w.block(0, 0, 3, 3) = eig_dx.transpose();
+        p2w.block(0, 3, 3, 1) = -1.f * (p2w.block(0, 0, 3, 3) * centroid.head(3));
+        pcl::PointCloud<pcl::PointXYZRGB> c_points;
+        pcl::transformPointCloud(*objectCloud, c_points, p2w);
+
+        pcl::PointXYZRGB min_pt, max_pt;
+        pcl::getMinMax3D(c_points, min_pt, max_pt);
+        const Eigen::Vector3f mean_diag = 0.5f * (max_pt.getVector3fMap() + min_pt.getVector3fMap());
+
+        //final transform
+        const Eigen::Quaternionf qfinal(eig_dx);
+        const Eigen::Vector3f tfinal = eig_dx * mean_diag + centroid.head(3);
+
+        //set object shape
+        shape_msgs::SolidPrimitive boundingVolume;
+        boundingVolume.type = shape_msgs::SolidPrimitive::BOX;
+        boundingVolume.dimensions.resize(3);
+        boundingVolume.dimensions[shape_msgs::SolidPrimitive::BOX_X] = max_pt.x - min_pt.x;
+        boundingVolume.dimensions[shape_msgs::SolidPrimitive::BOX_Y] = max_pt.y - min_pt.y;
+        boundingVolume.dimensions[shape_msgs::SolidPrimitive::BOX_Z] = max_pt.z - min_pt.z;
+        collisionObjects[i].primitives.push_back(boundingVolume);
+        geometry_msgs::Pose pose;
+        pose.position.x = tfinal[0];
+        pose.position.y = tfinal[1];
+        pose.position.z = tfinal[2];
+        pose.orientation.w = qfinal.w();
+        pose.orientation.x = qfinal.x();
+        pose.orientation.y = qfinal.y();
+        pose.orientation.z = qfinal.z();
+        collisionObjects[i].primitive_poses.push_back(pose);
+        collisionObjects[i].operation = moveit_msgs::CollisionObject::ADD;
+      }
+
+      planningSceneInterface->addCollisionObjects(collisionObjects);
+    }
+  }
+}
+
+bool CarlMoveIt::attachClosestSceneObject(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
+{
+  boost::recursive_mutex::scoped_lock lock(api_mutex);  //lock for the stored objects array
+
+  //find the closest point to the gripper pose
+  int closest = 0;
+  if (objectList.objects.size() == 0)
+  {
+    ROS_INFO("No scene objects to attach.");
+    return true;
+  } else if (objectList.objects.size() > 1)
+  {
+    // find the closest point
+    float min = numeric_limits<float>::infinity();
+    //geometry_msgs::Vector3 &v = grasp.transform.translation;
+    // check each segmented object
+    for (size_t i = 0; i < objectList.objects.size(); i++)
+    {
+      geometry_msgs::TransformStamped eef_transform = tfBuffer.lookupTransform(
+              objectList.objects[i].point_cloud.header.frame_id, armGroup->getEndEffectorLink(), ros::Time(0)
+      );
+      geometry_msgs::Vector3 &v = eef_transform.transform.translation;
+      //convert PointCloud2 to PointCloud to access the data easily
+      sensor_msgs::PointCloud cloud;
+      sensor_msgs::convertPointCloud2ToPointCloud(objectList.objects[i].point_cloud, cloud);
+      // check each point in the cloud
+      for (size_t j = 0; j < cloud.points.size(); j++)
+      {
+        // euclidean distance to the point
+        float dist = sqrt(
+                pow(cloud.points[j].x - v.x, 2) + pow(cloud.points[j].y - v.y, 2) + pow(cloud.points[j].z - v.z, 2)
+        );
+        if (dist < min)
+        {
+          min = dist;
+          closest = i;
+        }
+      }
     }
 
-    planningSceneInterface->addCollisionObjects(collisionObjects);
+    if (min > SCENE_OBJECT_DST_THRESHOLD)
+    {
+      ROS_INFO("No scene objects are close enough to the end effector to be attached.");
+      return true;
+    }
   }
+
+  vector<string> touchLinks;
+  touchLinks.push_back("jaco_link_eef");
+  touchLinks.push_back("jaco_link_finger_1");
+  touchLinks.push_back("jaco_link_finger_2");
+  touchLinks.push_back("jaco_link_finger_3");
+  touchLinks.push_back("jaco_link_finger_tip_1");
+  touchLinks.push_back("jaco_link_finger_tip_2");
+  touchLinks.push_back("jaco_link_finger_tip_3");
+  touchLinks.push_back("jaco_link_hand");
+  armGroup->attachObject(unattachedObjects[closest], armGroup->getEndEffectorLink(), touchLinks);
+  attachedObjects.push_back(unattachedObjects[closest]);
+  unattachedObjects.erase(unattachedObjects.begin() + closest);
+
+  return true;
+}
+
+bool CarlMoveIt::detatchSceneObjects(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
+{
+  for (int i = 0; i < attachedObjects.size(); i ++)
+  {
+    armGroup->detachObject(attachedObjects[i]);
+  }
+  planningSceneInterface->removeCollisionObjects(attachedObjects);
+  attachedObjects.clear();
+
+  return true;
 }
 
 int main(int argc, char **argv)

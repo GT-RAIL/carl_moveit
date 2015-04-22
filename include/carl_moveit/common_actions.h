@@ -12,6 +12,7 @@
 #include <rail_manipulation_msgs/LiftAction.h>
 #include <rail_manipulation_msgs/GripperAction.h>
 #include <std_srvs/Empty.h>
+#include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <wpi_jaco_msgs/AngularCommand.h>
 #include <wpi_jaco_msgs/GetAngularPosition.h>
@@ -37,6 +38,8 @@ private:
   ros::ServiceClient eraseTrajectoriesClient;
   ros::ServiceClient cartesianPathClient;
   ros::ServiceClient jacoPosClient;
+  ros::ServiceClient attachClosestObjectClient;
+  ros::ServiceClient detachObjectsClient;
 
   actionlib::SimpleActionClient<carl_moveit::MoveToJointPoseAction> moveToJointPoseClient;
   actionlib::SimpleActionClient<carl_moveit::MoveToPoseAction> moveToPoseClient;
@@ -46,6 +49,7 @@ private:
   actionlib::SimpleActionServer<carl_moveit::ArmAction> armServer;
   actionlib::SimpleActionServer<carl_moveit::PickupAction> pickupServer;
 
+  tf::TransformBroadcaster tfBroadcaster;
   tf::TransformListener tfListener;
 
   std::vector<float> homePosition;

@@ -4,7 +4,25 @@ project(carl_moveit)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs cmake_modules control_msgs message_generation geometry_msgs roscpp moveit_ros_planning_interface rail_manipulation_msgs sensor_msgs std_msgs std_srvs tf wpi_jaco_msgs)
+find_package(catkin REQUIRED COMPONENTS
+  actionlib
+  actionlib_msgs
+  cmake_modules
+  control_msgs
+  message_generation
+  geometry_msgs
+  roscpp
+  moveit_ros_planning_interface
+  pcl_conversions
+  pcl_ros
+  rail_manipulation_msgs
+  sensor_msgs
+  std_msgs
+  std_srvs
+  tf
+  wpi_jaco_msgs
+)
+
 find_package(Eigen REQUIRED)
 
 #######################################
