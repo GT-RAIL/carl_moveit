@@ -2,6 +2,20 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.13 (2015-04-22)
+-------------------
+* changelog reverted
+* Merge branch 'develop' of github.com:WPI-RAIL/carl_moveit into develop
+* changelog updated
+* Added threshold for attaching scene objects to the robot end-effector
+* Debug statement cleanup
+* Approach angle fix
+* Connected pickup action with scene object attaching
+* Added fingers as allowable touch links for scene object attachment
+* Merge branch 'develop' of github.com:WPI-RAIL/carl_moveit into develop
+* Support for scene collision objects from segmented/recognized object data
+* Contributors: David Kent, Russell Toris
+
 0.0.12 (2015-04-14)
 -------------------
 * Scene object adjustment
