@@ -40,7 +40,7 @@
 #include <pcl/common/transforms.h>
 
 #define NUM_JACO_JOINTS 6
-#define SCENE_OBJECT_DST_THRESHOLD .2
+#define SCENE_OBJECT_DST_THRESHOLD 0.2
 
 class CarlMoveIt
 {
@@ -103,7 +103,7 @@ private:
 
   bool attachClosestSceneObject(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 
-  bool detatchSceneObjects(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
+  bool detachSceneObjects(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 };
 
 #endif

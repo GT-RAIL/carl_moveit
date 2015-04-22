@@ -29,7 +29,7 @@ CarlMoveIt::CarlMoveIt() :
   cartesianPathServer = n.advertiseService("carl_moveit_wrapper/cartesian_path", &CarlMoveIt::cartesianPathCallback, this);
   ikServer = n.advertiseService("carl_moveit_wrapper/call_ik", &CarlMoveIt::ikCallback, this);
   attachObjectServer = n.advertiseService("carl_moveit_wrapper/attach_closest_object", &CarlMoveIt::attachClosestSceneObject, this);
-  detachObjectServer = n.advertiseService("carl_moveit_wrapper/detach_objects", &CarlMoveIt::detatchSceneObjects, this);
+  detachObjectServer = n.advertiseService("carl_moveit_wrapper/detach_objects", &CarlMoveIt::detachSceneObjects, this);
 
   //start action server
   moveToPoseServer.start();
@@ -450,7 +450,6 @@ void CarlMoveIt::recognizedObjectsCallback(const rail_manipulation_msgs::Segment
         collisionObjects[i].id = ss.str();
         unattachedObjects.push_back(ss.str());
 
-        //TODO: try computing convex hull to use as collision geometry, compare results to oriented bounding box
         //convert point cloud to pcl point cloud
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr objectCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
         pcl::PCLPointCloud2 converter;
@@ -571,7 +570,7 @@ bool CarlMoveIt::attachClosestSceneObject(std_srvs::Empty::Request &req, std_srv
   return true;
 }
 
-bool CarlMoveIt::detatchSceneObjects(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
+bool CarlMoveIt::detachSceneObjects(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
 {
   for (int i = 0; i < attachedObjects.size(); i ++)
   {
