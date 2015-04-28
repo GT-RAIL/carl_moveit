@@ -57,8 +57,8 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
     graspPose = goal->pose;
 
   tf::Transform graspTransform;
-  graspTransform.setOrigin(tf::Vector3(goal->pose.pose.position.x, goal->pose.pose.position.y, goal->pose.pose.position.z));
-  graspTransform.setRotation(tf::Quaternion(goal->pose.pose.orientation.x, goal->pose.pose.orientation.y, goal->pose.pose.orientation.z, goal->pose.pose.orientation.w));
+  graspTransform.setOrigin(tf::Vector3(graspPose.pose.position.x, graspPose.pose.position.y, graspPose.pose.position.z));
+  graspTransform.setRotation(tf::Quaternion(graspPose.pose.orientation.x, graspPose.pose.orientation.y, graspPose.pose.orientation.z, graspPose.pose.orientation.w));
   ros::Time now = ros::Time::now();
   tfBroadcaster.sendTransform(tf::StampedTransform(graspTransform, now, "base_footprint", "grasp_frame"));
   tfListener.waitForTransform("grasp_frame", "base_footprint", now, ros::Duration(5.0));
@@ -166,13 +166,31 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
 
 void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
 {
+  carl_moveit::ArmFeedback feedback;
   carl_moveit::ArmResult result;
+
+  switch (goal->action) {
+    case carl_moveit::ArmGoal::READY:
+      feedback.message = "Readying arm...";
+      armServer.publishFeedback(feedback);
+    break;
+    case carl_moveit::ArmGoal::RETRACT:
+      feedback.message = "Retracting arm...";
+      armServer.publishFeedback(feedback);
+    break;
+    default:
+      feedback.message = "Executing arm action...";
+      armServer.publishFeedback(feedback);
+    break;
+  }
 
   if (goal->action == carl_moveit::ArmGoal::RETRACT)
   {
     if (isArmRetracted(defaultRetractPosition))
     {
-      ROS_INFO("Arm is already retracted.");
+      feedback.message = "Arm is already retracted.";
+      armServer.publishFeedback(feedback);
+
       result.success = true;
       armServer.setSucceeded(result);
       return;
@@ -197,6 +215,11 @@ void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
   int attempts = MAX_HOME_ATTEMPTS;
   while (!succeeded && counter < attempts)
   {
+    stringstream ss;
+    ss << "Planning and moving arm to ready position (attempt " << counter + 1 << "/" << attempts << ")";
+    feedback.message = ss.str();
+    armServer.publishFeedback(feedback);
+
     ROS_INFO("Ready arm attempt %d", counter);
 
     moveToJointPoseClient.sendGoal(jointPoseGoal);
@@ -231,6 +254,9 @@ void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
 
   if (!succeeded)
   {
+    feedback.message = "Failed to ready arm.";
+    armServer.publishFeedback(feedback);
+
     ROS_INFO("Plan and move to ready position failed.");
     result.success = false;
     armServer.setSucceeded(result);
@@ -239,6 +265,9 @@ void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
 
   if (goal->action == carl_moveit::ArmGoal::RETRACT)
   {
+    feedback.message = "Moving arm to retracted position...";
+    armServer.publishFeedback(feedback);
+
     wpi_jaco_msgs::AngularCommand cmd;
     cmd.armCommand = true;
     cmd.fingerCommand = false;
@@ -272,6 +301,9 @@ void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
       ros::Time currentTime = ros::Time::now();
       if ((currentTime.toSec() - startTime.toSec()) > 10.0)
       {
+        feedback.message = "Retracting arm timed out.";
+        armServer.publishFeedback(feedback);
+
         ROS_INFO("Ready arm timed out.");
         result.success = false;
         armServer.setSucceeded(result);
@@ -281,7 +313,20 @@ void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
     }
   }
 
-  ROS_INFO("Ready arm finished.");
+  switch (goal->action) {
+    case carl_moveit::ArmGoal::READY:
+      feedback.message = "Ready arm completed.";
+      armServer.publishFeedback(feedback);
+      break;
+    case carl_moveit::ArmGoal::RETRACT:
+      feedback.message = "Retract arm completed.";
+      armServer.publishFeedback(feedback);
+      break;
+    default:
+      feedback.message = "Arm action completed.";
+      armServer.publishFeedback(feedback);
+      break;
+  }
 
   result.success = succeeded;
   armServer.setSucceeded(result);
