@@ -2,6 +2,12 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.14 (2015-04-27)
+-------------------
+* Merge branch 'develop' of github.com:WPI-RAIL/carl_moveit into develop
+* minor fixes
+* Contributors: David Kent
+
 0.0.13 (2015-04-22)
 -------------------
 * changelog reverted
