@@ -2,6 +2,12 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.15 (2015-04-29)
+-------------------
+* Merge branch 'develop' of github.com:WPI-RAIL/carl_moveit into develop
+* Added feedback to arm actions, fixed a bug with pickup for objects in the map frame
+* Contributors: David Kent
+
 0.0.14 (2015-04-27)
 -------------------
 * Merge branch 'develop' of github.com:WPI-RAIL/carl_moveit into develop
