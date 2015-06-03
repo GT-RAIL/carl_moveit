@@ -246,6 +246,13 @@ void CommonActions::executeStore(const carl_moveit::StoreGoalConstPtr &goal)
     return;
   }
 
+  //detach any attached collision objects
+  std_srvs::Empty emptySrv;
+  if (!detachObjectsClient.call(emptySrv))
+  {
+    ROS_INFO("Couldn't call detach objects service.");
+  }
+
   //raise gripper
   ss.str("");
   ss << "Raising gripper...";
