@@ -41,6 +41,7 @@ CommonActions::CommonActions() :
   liftServer.start();
   armServer.start();
   pickupServer.start();
+  storeServer.start();
 }
 
 void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
