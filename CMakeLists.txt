@@ -43,6 +43,7 @@ add_action_files(
   MoveToJointPose.action
   MoveToPose.action
   Pickup.action
+  ObtainObject.action
   Store.action
 )
 
@@ -74,15 +75,18 @@ include_directories(
 )
 
 ## Declare a cpp executable
-add_executable(carl_moveit_wrapper src/carl_moveit.cpp)
+add_executable(carl_moveit_wrapper src/carl_moveit.cpp include/carl_moveit/carl_moveit.h)
 add_executable(common_actions src/common_actions.cpp)
+add_executable(high_level_actions src/high_level_actions.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(carl_moveit_wrapper ${catkin_LIBRARIES})
 target_link_libraries(common_actions ${catkin_LIBRARIES})
+target_link_libraries(high_level_actions ${catkin_LIBRARIES})
 
 add_dependencies(carl_moveit_wrapper carl_moveit_gencpp)
 add_dependencies(common_actions carl_moveit_gencpp)
+add_dependencies(high_level_actions carl_moveit_gencpp)
 
 #############
 ## Install ##
