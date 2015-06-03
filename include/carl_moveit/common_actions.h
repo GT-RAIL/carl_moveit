@@ -9,6 +9,7 @@
 #include <carl_moveit/MoveToJointPoseAction.h>
 #include <carl_moveit/MoveToPoseAction.h>
 #include <carl_moveit/PickupAction.h>
+#include <carl_moveit/StoreAction.h>
 #include <rail_manipulation_msgs/LiftAction.h>
 #include <rail_manipulation_msgs/GripperAction.h>
 #include <std_srvs/Empty.h>
@@ -48,6 +49,7 @@ private:
   actionlib::SimpleActionServer<rail_manipulation_msgs::LiftAction> liftServer;
   actionlib::SimpleActionServer<carl_moveit::ArmAction> armServer;
   actionlib::SimpleActionServer<carl_moveit::PickupAction> pickupServer;
+  actionlib::SimpleActionServer<carl_moveit::StoreAction> storeServer;
 
   tf::TransformBroadcaster tfBroadcaster;
   tf::TransformListener tfListener;
@@ -75,6 +77,16 @@ private:
   * @param goal Grasp pose with which to execute the pickup
   */
   void executePickup(const carl_moveit::PickupGoalConstPtr &goal);
+
+  /**
+  * \brief Perform a store action
+  *
+  * A store action with CARL consists of moving the end effector above the storage location on CARL's platform,
+  * lowering the end effector, opening the gripper to release the object, and raising the end effector.
+  *
+  * @param goal Empty store goal
+  */
+  void executeStore(const carl_moveit::StoreGoalConstPtr &goal);
 
   /**
   * \brief Raise the hand vertically by 10 cm

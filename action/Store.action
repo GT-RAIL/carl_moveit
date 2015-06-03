@@ -1,0 +1,4 @@
+---
+bool success  # True on successful store
+---
+string message  # The current state message

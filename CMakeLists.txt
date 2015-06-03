@@ -43,6 +43,7 @@ add_action_files(
   MoveToJointPose.action
   MoveToPose.action
   Pickup.action
+  Store.action
 )
 
 ## Generate added messages and services with any dependencies listed here

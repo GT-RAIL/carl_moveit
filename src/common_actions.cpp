@@ -9,7 +9,8 @@ CommonActions::CommonActions() :
     liftClient("carl_moveit_wrapper/common_actions/lift"),
     liftServer(n, "carl_moveit_wrapper/common_actions/lift", boost::bind(&CommonActions::liftArm, this, _1), false),
     armServer(n, "carl_moveit_wrapper/common_actions/arm_action", boost::bind(&CommonActions::executeArmAction, this, _1), false),
-    pickupServer(n, "carl_moveit_wrapper/common_actions/pickup", boost::bind(&CommonActions::executePickup, this, _1), false)
+    pickupServer(n, "carl_moveit_wrapper/common_actions/pickup", boost::bind(&CommonActions::executePickup, this, _1), false),
+    storeServer(n, "carl_moveit_wrapper/common_actions/store", boost::bind(&CommonActions::executeStore, this, _1), false)
 {
   //setup home position
   homePosition.resize(NUM_JACO_JOINTS);
@@ -69,7 +70,7 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
 
   //move to approach angle
   ss.str("");
-  ss << "Moving gripper to approach angle...";
+  ss << "Attempting to move gripper to approach angle...";
   feedback.message = ss.str();
   pickupServer.publishFeedback(feedback);
 
@@ -79,7 +80,10 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
   moveToPoseClient.waitForResult(ros::Duration(30.0));
   if (!moveToPoseClient.getResult()->success)
   {
-    ROS_INFO("Moving to approach angle failed.");
+    ss.str("");
+    ss << "Moving to approach angle failed for this grasp.";
+    feedback.message = ss.str();
+    pickupServer.publishFeedback(feedback);
     result.success = false;
     pickupServer.setAborted(result, "Unable to move to appraoch angle.");
     return;
@@ -162,6 +166,105 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
 
   result.success = true;
   pickupServer.setSucceeded(result);
+}
+
+void CommonActions::executeStore(const carl_moveit::StoreGoalConstPtr &goal)
+{
+  carl_moveit::StoreFeedback feedback;
+  carl_moveit::StoreResult result;
+  stringstream ss;
+
+  //make sure pose is in the base_footprint frame
+  geometry_msgs::PoseStamped storePose;
+  storePose.header.frame_id = "base_link";
+  storePose.pose.position.x = .047;
+  storePose.pose.position.y = -.191;
+  storePose.pose.position.z = .831;
+  storePose.pose.orientation.x = .699;
+  storePose.pose.orientation.y = -.294;
+  storePose.pose.orientation.z = -.620;
+  storePose.pose.orientation.w = -.202;
+
+  //move above store position
+  ss.str("");
+  ss << "Moving gripper above store position...";
+  feedback.message = ss.str();
+  storeServer.publishFeedback(feedback);
+
+  carl_moveit::MoveToPoseGoal approachAngleGoal;
+  approachAngleGoal.pose = storePose;
+  moveToPoseClient.sendGoal(approachAngleGoal);
+  moveToPoseClient.waitForResult(ros::Duration(30.0));
+  if (!moveToPoseClient.getResult()->success)
+  {
+    ss.str("");
+    ss << "Moving gripper above store position failed.";
+    feedback.message = ss.str();
+    storeServer.publishFeedback(feedback);
+    result.success = false;
+    storeServer.setAborted(result, "Unable to move gripper above store position.");
+    return;
+  }
+
+  //lower gripper
+  ss.str("");
+  ss << "Lowering gripper...";
+  feedback.message = ss.str();
+  storeServer.publishFeedback(feedback);
+
+  carl_moveit::CartesianPath srv;
+  geometry_msgs::PoseStamped cartesianPose;
+  cartesianPose.header.frame_id = "base_footprint";
+  tfListener.transformPose("base_footprint", storePose, cartesianPose);
+  storePose.pose.position.z -= .1;
+  srv.request.waypoints.push_back(cartesianPose.pose);
+  srv.request.avoidCollisions = false;
+  if (!cartesianPathClient.call(srv))
+  {
+    ROS_INFO("Could not call Jaco Cartesian path service.");
+    result.success = false;
+    storeServer.setAborted(result, "Could not call Jaco Cartesian path service.");
+    return;
+  }
+
+  //open gripper
+  ss.str("");
+  ss << "Opening gripper...";
+  feedback.message = ss.str();
+  storeServer.publishFeedback(feedback);
+
+  rail_manipulation_msgs::GripperGoal gripperGoal;
+  gripperGoal.close = false;
+  gripperClient.sendGoal(gripperGoal);
+  gripperClient.waitForResult(ros::Duration(10.0));
+  if (!gripperClient.getResult()->success)
+  {
+    ROS_INFO("Opening gripper failed.");
+    result.success = false;
+    storeServer.setAborted(result, "Unable to open gripper.");
+    return;
+  }
+
+  //raise gripper
+  ss.str("");
+  ss << "Raising gripper...";
+  feedback.message = ss.str();
+  storeServer.publishFeedback(feedback);
+
+  cartesianPose.pose.position.z += .1;
+  srv.request.waypoints.clear();
+  srv.request.waypoints.push_back(cartesianPose.pose);
+  srv.request.avoidCollisions = false;
+  if (!cartesianPathClient.call(srv))
+  {
+    ROS_INFO("Could not call Jaco Cartesian path service.");
+    result.success = false;
+    storeServer.setAborted(result, "Could not call Jaco Cartesian path service.");
+    return;
+  }
+
+  result.success = true;
+  storeServer.setSucceeded(result);
 }
 
 void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
