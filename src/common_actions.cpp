@@ -215,9 +215,9 @@ void CommonActions::executeStore(const carl_moveit::StoreGoalConstPtr &goal)
 
   carl_moveit::CartesianPath srv;
   geometry_msgs::PoseStamped cartesianPose;
+  storePose.pose.position.z -= .1;
   cartesianPose.header.frame_id = "base_footprint";
   tfListener.transformPose("base_footprint", storePose, cartesianPose);
-  storePose.pose.position.z -= .1;
   srv.request.waypoints.push_back(cartesianPose.pose);
   srv.request.avoidCollisions = false;
   if (!cartesianPathClient.call(srv))
