@@ -259,7 +259,7 @@ void CommonActions::executeStore(const carl_moveit::StoreGoalConstPtr &goal)
   feedback.message = ss.str();
   storeServer.publishFeedback(feedback);
 
-  cartesianPose.pose.position.z += .1;
+  cartesianPose.pose.position.z += .05;
   srv.request.waypoints.clear();
   srv.request.waypoints.push_back(cartesianPose.pose);
   srv.request.avoidCollisions = false;
