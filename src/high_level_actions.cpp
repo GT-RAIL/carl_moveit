@@ -42,6 +42,7 @@ void HighLevelActions::executeObtainObject(const carl_moveit::ObtainObjectGoalCo
   feedback.message = "Attempting to segment the surface.";
   obtainObjectServer.publishFeedback(feedback);
   std_srvs::Empty segment;
+  recognizedObjectsCounter = 0;
   if (!segmentClient.call(segment))
   {
     ROS_INFO("Could not call segment service.");
@@ -51,11 +52,12 @@ void HighLevelActions::executeObtainObject(const carl_moveit::ObtainObjectGoalCo
 
   //spin and wait
   feedback.message = "Waiting for recognition results.";
+  ROS_INFO("Waiting on recognition...");
   obtainObjectServer.publishFeedback(feedback);
   bool finished = false;
-  recognizedObjectsCounter = 0;
   while (!finished)
   {
+    ROS_INFO("Recognized objects counter: %d", recognizedObjectsCounter);
     {
       boost::mutex::scoped_lock lock(recognizedObjectsMutex);
       finished = recognizedObjectsCounter == 2;
@@ -65,10 +67,12 @@ void HighLevelActions::executeObtainObject(const carl_moveit::ObtainObjectGoalCo
   //pickup the specified object
   string objectName = boost::to_upper_copy(goal->object_name);
   bool pickupSucceeded = false;
+  ROS_INFO("Looking for object %s...", objectName.c_str());
   for (unsigned int i = 0; i < recognizedObjects.objects.size(); i ++)
   {
     if (recognizedObjects.objects[i].name == objectName)
     {
+      ROS_INFO("Found object! Attempting pickup...");
       carl_moveit::PickupGoal pickupGoal;
       pickupGoal.lift = goal->lift;
       pickupGoal.verify = goal->verify;
