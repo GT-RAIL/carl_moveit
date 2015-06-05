@@ -112,10 +112,9 @@ void HighLevelActions::executeObtainObject(const carl_moveit::ObtainObjectGoalCo
   //Store object on robot
   carl_moveit::StoreGoal storeGoal;
   storeClient.sendGoal(storeGoal);
-  completed = armClient.waitForResult(ros::Duration(30.0));
-  succeeded = (armClient.getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-  success = armClient.getResult()->success;
-  if (!completed || !succeeded || !success)
+  storeClient.waitForResult(ros::Duration(30.0));
+  success = storeClient.getResult()->success;
+  if (!success)
   {
     ROS_INFO("Could not store object.");
     obtainObjectServer.setSucceeded(result, "Could not store object.");
