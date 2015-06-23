@@ -1,0 +1,5 @@
+float64 height # Height of surface to be wiped
+---
+bool success  # True on successful wipe
+---
+string message  # The current state message

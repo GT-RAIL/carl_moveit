@@ -10,6 +10,7 @@
 #include <carl_moveit/MoveToPoseAction.h>
 #include <carl_moveit/PickupAction.h>
 #include <carl_moveit/StoreAction.h>
+#include <carl_moveit/WipeSurfaceAction.h>
 #include <rail_manipulation_msgs/LiftAction.h>
 #include <rail_manipulation_msgs/GripperAction.h>
 #include <std_srvs/Empty.h>
@@ -50,6 +51,7 @@ private:
   actionlib::SimpleActionServer<carl_moveit::ArmAction> armServer;
   actionlib::SimpleActionServer<carl_moveit::PickupAction> pickupServer;
   actionlib::SimpleActionServer<carl_moveit::StoreAction> storeServer;
+  actionlib::SimpleActionServer<carl_moveit::WipeSurfaceAction> wipeSurfaceServer;
 
   tf::TransformBroadcaster tfBroadcaster;
   tf::TransformListener tfListener;
@@ -87,6 +89,8 @@ private:
   * @param goal Empty store goal
   */
   void executeStore(const carl_moveit::StoreGoalConstPtr &goal);
+
+  void executeWipeSurface(const carl_moveit::WipeSurfaceGoalConstPtr &goal);
 
   /**
   * \brief Raise the hand vertically by 10 cm

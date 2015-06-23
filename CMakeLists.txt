@@ -45,6 +45,7 @@ add_action_files(
   Pickup.action
   ObtainObject.action
   Store.action
+  WipeSurface.action
 )
 
 ## Generate added messages and services with any dependencies listed here

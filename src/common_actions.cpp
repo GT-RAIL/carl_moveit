@@ -10,7 +10,8 @@ CommonActions::CommonActions() :
     liftServer(n, "carl_moveit_wrapper/common_actions/lift", boost::bind(&CommonActions::liftArm, this, _1), false),
     armServer(n, "carl_moveit_wrapper/common_actions/arm_action", boost::bind(&CommonActions::executeArmAction, this, _1), false),
     pickupServer(n, "carl_moveit_wrapper/common_actions/pickup", boost::bind(&CommonActions::executePickup, this, _1), false),
-    storeServer(n, "carl_moveit_wrapper/common_actions/store", boost::bind(&CommonActions::executeStore, this, _1), false)
+    storeServer(n, "carl_moveit_wrapper/common_actions/store", boost::bind(&CommonActions::executeStore, this, _1), false),
+    wipeSurfaceServer(n, "carl_moveit_wrapper/common_actions/wipe_surface", boost::bind(&CommonActions::executeWipeSurface, this, _1), false)
 {
   //setup home position
   homePosition.resize(NUM_JACO_JOINTS);
@@ -441,6 +442,66 @@ void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
 
   result.success = succeeded;
   armServer.setSucceeded(result);
+}
+
+void CommonActions::executeWipeSurface(const carl_moveit::WipeSurfaceGoalConstPtr &goal)
+{
+  carl_moveit::WipeSurfaceFeedback feedback;
+  carl_moveit::WipeSurfaceResult result;
+  stringstream ss;
+
+  //move to wiping position
+  carl_moveit::MoveToPoseGoal poseGoal;
+  poseGoal.pose.header.frame_id = "base_footprint";
+  poseGoal.pose.pose.position.x = 0.869;
+  poseGoal.pose.pose.position.y = 0.0;
+  poseGoal.pose.pose.position.z = goal->height;
+
+  moveToPoseClient.sendGoal(poseGoal);
+  moveToPoseClient.waitForResult(ros::Duration(30.0));
+  if (!moveToPoseClient.getResult()->success)
+  {
+    ss.str("");
+    ss << "Moving to initial wiping position failed.";
+    feedback.message = ss.str();
+    wipeSurfaceServer.publishFeedback(feedback);
+    result.success = false;
+    wipeSurfaceServer.setAborted(result, "Unable to move to appraoch angle.");
+    return;
+  }
+
+  //move arm back and forth to wipe
+  ss.str("");
+  ss << "Wiping...";
+  feedback.message = ss.str();
+  wipeSurfaceServer.publishFeedback(feedback);
+
+  carl_moveit::CartesianPath srv;
+  for (unsigned int i = 0; i < 3; i ++)
+  {
+    geometry_msgs::Pose pose = poseGoal.pose.pose;
+    pose.position.y += .2;
+    srv.request.waypoints.push_back(pose);
+    pose.position.y -= .2;
+    srv.request.waypoints.push_back(pose);
+  }
+  ROS_INFO("Waypoints y:");
+  for (unsigned int i = 0; i < srv.request.waypoints.size(); i ++)
+  {
+    ROS_INFO("%f", srv.request.waypoints[i].position.y);
+  }
+  srv.request.avoidCollisions = false;
+  if (!cartesianPathClient.call(srv))
+  {
+    ROS_INFO("Could not call Jaco Cartesian path service.");
+    result.success = false;
+    wipeSurfaceServer.setAborted(result, "Could not call Jaco Cartesian path service.");
+    return;
+  }
+
+  ROS_INFO("Wipe surface action completed successfully.");
+  result.success = true;
+  wipeSurfaceServer.setSucceeded(result);
 }
 
 void CommonActions::liftArm(const rail_manipulation_msgs::LiftGoalConstPtr &goal)
