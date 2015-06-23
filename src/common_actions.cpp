@@ -499,7 +499,7 @@ void CommonActions::executeWipeSurface(const carl_moveit::WipeSurfaceGoalConstPt
     pose.position.x += .1;
     srv.request.waypoints.push_back(pose);
     pose.position.y -= .2;
-    pose.position.x -= .1
+    pose.position.x -= .1;
     srv.request.waypoints.push_back(pose);
     pose.position.y += .2;
     pose.position.x -= .1;
