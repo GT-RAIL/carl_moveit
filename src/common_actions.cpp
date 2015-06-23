@@ -493,16 +493,16 @@ void CommonActions::executeWipeSurface(const carl_moveit::WipeSurfaceGoalConstPt
     srv.request.waypoints.push_back(pose);
     */
     //diamond motion
-    pose.position.y += .2;
+    pose.position.y += .15;
     srv.request.waypoints.push_back(pose);
-    pose.position.y -= .2;
-    pose.position.x += .1;
+    pose.position.y -= .15;
+    pose.position.x += .05;
     srv.request.waypoints.push_back(pose);
-    pose.position.y -= .2;
-    pose.position.x -= .1;
+    pose.position.y -= .15;
+    pose.position.x -= .05;
     srv.request.waypoints.push_back(pose);
-    pose.position.y += .2;
-    pose.position.x -= .1;
+    pose.position.y += .15;
+    pose.position.x -= .05;
     srv.request.waypoints.push_back(pose);
   }
   ROS_INFO("Waypoints y:");
