@@ -43,6 +43,7 @@ CommonActions::CommonActions() :
   armServer.start();
   pickupServer.start();
   storeServer.start();
+  wipeSurfaceServer.start();
 }
 
 void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
