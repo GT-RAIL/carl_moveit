@@ -457,6 +457,10 @@ void CommonActions::executeWipeSurface(const carl_moveit::WipeSurfaceGoalConstPt
   poseGoal.pose.pose.position.x = 0.869;
   poseGoal.pose.pose.position.y = 0.0;
   poseGoal.pose.pose.position.z = goal->height;
+  poseGoal.pose.pose.orientation.x = -0.605;
+  poseGoal.pose.pose.orientation.y = 0.271;
+  poseGoal.pose.pose.orientation.z = 0.699;
+  poseGoal.pose.pose.orientation.w = 0.267;
 
   moveToPoseClient.sendGoal(poseGoal);
   moveToPoseClient.waitForResult(ros::Duration(30.0));
