@@ -400,10 +400,8 @@ void CarlMoveIt::cartesianControlCallback(const geometry_msgs::Twist &msg)
   angularCmdPublisher.publish(cmd);
 }
 
-//TODO: re-enable after testing
 void CarlMoveIt::recognizedObjectsCallback(const rail_manipulation_msgs::SegmentedObjectList &msg)
 {
-  /*
   //remove previously detected collision objects
   unattachedObjects.clear();  //clear list of unattached scene object names
   vector<string> previousObjects = planningSceneInterface->getKnownObjectNames();
@@ -507,7 +505,6 @@ void CarlMoveIt::recognizedObjectsCallback(const rail_manipulation_msgs::Segment
       planningSceneInterface->addCollisionObjects(collisionObjects);
     }
   }
-  */
 }
 
 bool CarlMoveIt::attachClosestSceneObject(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
