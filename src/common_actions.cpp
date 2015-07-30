@@ -178,6 +178,7 @@ void CommonActions::executeStore(const carl_moveit::StoreGoalConstPtr &goal)
   stringstream ss;
 
   //make sure pose is in the base_footprint frame
+  /*
   geometry_msgs::PoseStamped storePose;
   storePose.header.frame_id = "base_link";
   storePose.pose.position.x = .047;
@@ -187,6 +188,7 @@ void CommonActions::executeStore(const carl_moveit::StoreGoalConstPtr &goal)
   storePose.pose.orientation.y = -.294;
   storePose.pose.orientation.z = -.620;
   storePose.pose.orientation.w = -.202;
+   */
 
   //move above store position
   ss.str("");
@@ -195,7 +197,8 @@ void CommonActions::executeStore(const carl_moveit::StoreGoalConstPtr &goal)
   storeServer.publishFeedback(feedback);
 
   carl_moveit::MoveToPoseGoal approachAngleGoal;
-  approachAngleGoal.pose = storePose;
+  approachAngleGoal.pose = goal->store_pose;
+  approachAngleGoal.pose.pose.position.z += .1;
   moveToPoseClient.sendGoal(approachAngleGoal);
   moveToPoseClient.waitForResult(ros::Duration(30.0));
   if (!moveToPoseClient.getResult()->success)
@@ -217,9 +220,9 @@ void CommonActions::executeStore(const carl_moveit::StoreGoalConstPtr &goal)
 
   carl_moveit::CartesianPath srv;
   geometry_msgs::PoseStamped cartesianPose;
-  storePose.pose.position.z -= .1;
+  approachAngleGoal.pose.pose.position.z -= .1;
   cartesianPose.header.frame_id = "base_footprint";
-  tfListener.transformPose("base_footprint", storePose, cartesianPose);
+  tfListener.transformPose("base_footprint", approachAngleGoal.pose, cartesianPose);
   srv.request.waypoints.push_back(cartesianPose.pose);
   srv.request.avoidCollisions = false;
   if (!cartesianPathClient.call(srv))

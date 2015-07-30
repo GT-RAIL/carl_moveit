@@ -1,3 +1,4 @@
+geometry_msgs/PoseStamped store_pose    # end-effector pose for storing the held object
 ---
 bool success  # True on successful store
 ---
