@@ -2,6 +2,28 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.16 (2015-08-18)
+-------------------
+* Added store pose to the store action, instead of hardcoding it to CARL's storage platform
+* re-enabled collision object generation from segmented objects
+* Moved obtain object to carl_demos, as it probably won't be re-used anywhere
+* adjusted wiping motion
+* changed wiping motion
+* changed wiping motion
+* updated gripper orientation
+* started wipe server
+* Added wipe surface action
+* Updated store action
+* Debugging store action
+* Debugging store action.
+* Added a pickup action where an object name can be specified
+* Detached picked up objects on store action execution
+* store bug fix
+* store bug fix
+* Added store action for storing objects in a container on CARL's platform
+* Update .travis.yml
+* Contributors: David Kent, Russell Toris
+
 0.0.15 (2015-04-29)
 -------------------
 * Merge branch 'develop' of github.com:WPI-RAIL/carl_moveit into develop
