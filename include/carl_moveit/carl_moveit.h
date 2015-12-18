@@ -8,10 +8,6 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
-#include <carl_moveit/CallIK.h>
-#include <carl_moveit/CartesianPath.h>
-#include <carl_moveit/MoveToJointPoseAction.h>
-#include <carl_moveit/MoveToPoseAction.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <moveit/robot_state/conversions.h>
 #include <moveit/move_group_interface/move_group.h>
@@ -25,6 +21,10 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <pcl_ros/point_cloud.h>
+#include <rail_manipulation_msgs/CallIK.h>
+#include <rail_manipulation_msgs/CartesianPath.h>
+#include <rail_manipulation_msgs/MoveToJointPoseAction.h>
+#include <rail_manipulation_msgs/MoveToPoseAction.h>
 #include <rail_manipulation_msgs/SegmentedObjectList.h>
 #include <sensor_msgs/JointState.h>
 #include <sensor_msgs/point_cloud_conversion.h>
@@ -67,8 +67,8 @@ private:
   ros::ServiceClient clearOctomapClient;
 
   actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> armTrajectoryClient;
-  actionlib::SimpleActionServer<carl_moveit::MoveToPoseAction> moveToPoseServer;
-  actionlib::SimpleActionServer<carl_moveit::MoveToJointPoseAction> moveToJointPoseServer;
+  actionlib::SimpleActionServer<rail_manipulation_msgs::MoveToPoseAction> moveToPoseServer;
+  actionlib::SimpleActionServer<rail_manipulation_msgs::MoveToJointPoseAction> moveToJointPoseServer;
 
   tf2_ros::Buffer tfBuffer;
   tf2_ros::TransformListener tfListener;
@@ -83,13 +83,13 @@ private:
   std::vector<std::string> attachedObjects;  //the names of the objects (in the planning scene) attached to the robot
   std::vector<std::string> unattachedObjects; //the names of the objects (in the planning scene) not attached to the robot
 
-  void moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal);
+  void moveToPose(const rail_manipulation_msgs::MoveToPoseGoalConstPtr &goal);
 
-  void moveToJointPose(const carl_moveit::MoveToJointPoseGoalConstPtr &goal);
+  void moveToJointPose(const rail_manipulation_msgs::MoveToJointPoseGoalConstPtr &goal);
 
-  bool cartesianPathCallback(carl_moveit::CartesianPath::Request &req, carl_moveit::CartesianPath::Response &res);
+  bool cartesianPathCallback(rail_manipulation_msgs::CartesianPath::Request &req, rail_manipulation_msgs::CartesianPath::Response &res);
 
-  bool ikCallback(carl_moveit::CallIK::Request &req, carl_moveit::CallIK::Response &res);
+  bool ikCallback(rail_manipulation_msgs::CallIK::Request &req, rail_manipulation_msgs::CallIK::Response &res);
 
   moveit_msgs::GetPositionIK::Response callIK(geometry_msgs::PoseStamped pose);
 
