@@ -1,4 +1,4 @@
-carl_moveit [![Build Status](https://api.travis-ci.org/WPI-RAIL/carl_moveit.png)](https://travis-ci.org/WPI-RAIL/carl_moveit)
+carl_moveit [![Build Status](https://api.travis-ci.org/GT-RAIL/carl_moveit.png)](https://travis-ci.org/GT-RAIL/carl_moveit)
 ===========
 
 #### MoveIt! Configuration and ROS Interface for CARL
