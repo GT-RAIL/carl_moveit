@@ -33,7 +33,7 @@ CommonActions::CommonActions() :
   angularCmdPublisher = n.advertise<wpi_jaco_msgs::AngularCommand>("jaco_arm/angular_cmd", 1);
 
   eraseTrajectoriesClient = n.serviceClient<std_srvs::Empty>("jaco_arm/erase_trajectories");
-  cartesianPathClient = n.serviceClient<carl_moveit::CartesianPath>("carl_moveit_wrapper/cartesian_path");
+  cartesianPathClient = n.serviceClient<rail_manipulation_msgs::CartesianPath>("carl_moveit_wrapper/cartesian_path");
   jacoPosClient = n.serviceClient<wpi_jaco_msgs::GetAngularPosition>("jaco_arm/get_angular_position");
   attachClosestObjectClient = n.serviceClient<std_srvs::Empty>("carl_moveit_wrapper/attach_closest_object");
   detachObjectsClient = n.serviceClient<std_srvs::Empty>("carl_moveit_wrapper/detach_objects");
@@ -46,10 +46,10 @@ CommonActions::CommonActions() :
   wipeSurfaceServer.start();
 }
 
-void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
+void CommonActions::executePickup(const rail_manipulation_msgs::PickupGoalConstPtr &goal)
 {
-  carl_moveit::PickupFeedback feedback;
-  carl_moveit::PickupResult result;
+  rail_manipulation_msgs::PickupFeedback feedback;
+  rail_manipulation_msgs::PickupResult result;
   stringstream ss;
 
   //make sure pose is in the base_footprint frame
@@ -77,7 +77,7 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
   feedback.message = ss.str();
   pickupServer.publishFeedback(feedback);
 
-  carl_moveit::MoveToPoseGoal approachAngleGoal;
+  rail_manipulation_msgs::MoveToPoseGoal approachAngleGoal;
   approachAngleGoal.pose = approachAnglePose;
   moveToPoseClient.sendGoal(approachAngleGoal);
   moveToPoseClient.waitForResult(ros::Duration(30.0));
@@ -116,7 +116,7 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
   feedback.message = ss.str();
   pickupServer.publishFeedback(feedback);
 
-  carl_moveit::CartesianPath srv;
+  rail_manipulation_msgs::CartesianPath srv;
   geometry_msgs::PoseStamped cartesianPose;
   cartesianPose.header.frame_id = "base_footprint";
   tfListener.transformPose("base_footprint", graspPose, cartesianPose);
@@ -171,10 +171,10 @@ void CommonActions::executePickup(const carl_moveit::PickupGoalConstPtr &goal)
   pickupServer.setSucceeded(result);
 }
 
-void CommonActions::executeStore(const carl_moveit::StoreGoalConstPtr &goal)
+void CommonActions::executeStore(const rail_manipulation_msgs::StoreGoalConstPtr &goal)
 {
-  carl_moveit::StoreFeedback feedback;
-  carl_moveit::StoreResult result;
+  rail_manipulation_msgs::StoreFeedback feedback;
+  rail_manipulation_msgs::StoreResult result;
   stringstream ss;
 
   //make sure pose is in the base_footprint frame
@@ -196,7 +196,7 @@ void CommonActions::executeStore(const carl_moveit::StoreGoalConstPtr &goal)
   feedback.message = ss.str();
   storeServer.publishFeedback(feedback);
 
-  carl_moveit::MoveToPoseGoal approachAngleGoal;
+  rail_manipulation_msgs::MoveToPoseGoal approachAngleGoal;
   approachAngleGoal.pose = goal->store_pose;
   approachAngleGoal.pose.pose.position.z += .1;
   moveToPoseClient.sendGoal(approachAngleGoal);
@@ -218,7 +218,7 @@ void CommonActions::executeStore(const carl_moveit::StoreGoalConstPtr &goal)
   feedback.message = ss.str();
   storeServer.publishFeedback(feedback);
 
-  carl_moveit::CartesianPath srv;
+  rail_manipulation_msgs::CartesianPath srv;
   geometry_msgs::PoseStamped cartesianPose;
   approachAngleGoal.pose.pose.position.z -= .1;
   cartesianPose.header.frame_id = "base_footprint";
@@ -280,17 +280,17 @@ void CommonActions::executeStore(const carl_moveit::StoreGoalConstPtr &goal)
   storeServer.setSucceeded(result);
 }
 
-void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
+void CommonActions::executeArmAction(const rail_manipulation_msgs::ArmGoalConstPtr &goal)
 {
-  carl_moveit::ArmFeedback feedback;
-  carl_moveit::ArmResult result;
+  rail_manipulation_msgs::ArmFeedback feedback;
+  rail_manipulation_msgs::ArmResult result;
 
   switch (goal->action) {
-    case carl_moveit::ArmGoal::READY:
+    case rail_manipulation_msgs::ArmGoal::READY:
       feedback.message = "Readying arm...";
       armServer.publishFeedback(feedback);
     break;
-    case carl_moveit::ArmGoal::RETRACT:
+    case rail_manipulation_msgs::ArmGoal::RETRACT:
       feedback.message = "Retracting arm...";
       armServer.publishFeedback(feedback);
     break;
@@ -300,7 +300,7 @@ void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
     break;
   }
 
-  if (goal->action == carl_moveit::ArmGoal::RETRACT)
+  if (goal->action == rail_manipulation_msgs::ArmGoal::RETRACT)
   {
     if (isArmRetracted(defaultRetractPosition))
     {
@@ -313,7 +313,7 @@ void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
     }
   }
 
-  carl_moveit::MoveToJointPoseGoal jointPoseGoal;
+  rail_manipulation_msgs::MoveToJointPoseGoal jointPoseGoal;
 
   vector<float> baseJointPoseGoal;
   baseJointPoseGoal.resize(homePosition.size());
@@ -352,7 +352,7 @@ void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
       }
     }
 
-    carl_moveit::MoveToJointPoseResultConstPtr readyResult = moveToJointPoseClient.getResult();
+    rail_manipulation_msgs::MoveToJointPoseResultConstPtr readyResult = moveToJointPoseClient.getResult();
 
     succeeded = readyResult->success;
     counter ++;
@@ -379,7 +379,7 @@ void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
     return;
   }
 
-  if (goal->action == carl_moveit::ArmGoal::RETRACT)
+  if (goal->action == rail_manipulation_msgs::ArmGoal::RETRACT)
   {
     feedback.message = "Moving arm to retracted position...";
     armServer.publishFeedback(feedback);
@@ -430,11 +430,11 @@ void CommonActions::executeArmAction(const carl_moveit::ArmGoalConstPtr &goal)
   }
 
   switch (goal->action) {
-    case carl_moveit::ArmGoal::READY:
+    case rail_manipulation_msgs::ArmGoal::READY:
       feedback.message = "Ready arm completed.";
       armServer.publishFeedback(feedback);
       break;
-    case carl_moveit::ArmGoal::RETRACT:
+    case rail_manipulation_msgs::ArmGoal::RETRACT:
       feedback.message = "Retract arm completed.";
       armServer.publishFeedback(feedback);
       break;
@@ -455,7 +455,7 @@ void CommonActions::executeWipeSurface(const carl_moveit::WipeSurfaceGoalConstPt
   stringstream ss;
 
   //move to wiping position
-  carl_moveit::MoveToPoseGoal poseGoal;
+  rail_manipulation_msgs::MoveToPoseGoal poseGoal;
   poseGoal.pose.header.frame_id = "base_footprint";
   poseGoal.pose.pose.position.x = 0.869;
   poseGoal.pose.pose.position.y = 0.0;
@@ -484,7 +484,7 @@ void CommonActions::executeWipeSurface(const carl_moveit::WipeSurfaceGoalConstPt
   feedback.message = ss.str();
   wipeSurfaceServer.publishFeedback(feedback);
 
-  carl_moveit::CartesianPath srv;
+  rail_manipulation_msgs::CartesianPath srv;
   for (unsigned int i = 0; i < 3; i ++)
   {
     geometry_msgs::Pose pose = poseGoal.pose.pose;
@@ -531,7 +531,7 @@ void CommonActions::liftArm(const rail_manipulation_msgs::LiftGoalConstPtr &goal
 {
   rail_manipulation_msgs::LiftResult result;
 
-  carl_moveit::CartesianPath srv;
+  rail_manipulation_msgs::CartesianPath srv;
   tf::StampedTransform currentEefTransform;
   tfListener.waitForTransform("jaco_link_eef", "base_footprint", ros::Time::now(), ros::Duration(1.0));
   tfListener.lookupTransform("base_footprint", "jaco_link_eef", ros::Time(0), currentEefTransform);

@@ -98,11 +98,11 @@ static inline double nearest_equivalent(double desired, double current)
   return highVal;
 }
 
-void CarlMoveIt::moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal)
+void CarlMoveIt::moveToPose(const rail_manipulation_msgs::MoveToPoseGoalConstPtr &goal)
 {
   moveit_msgs::GetPositionIK::Response ikRes = callIK(goal->pose);
 
-  carl_moveit::MoveToPoseResult result;
+  rail_manipulation_msgs::MoveToPoseResult result;
   if (ikRes.error_code.val == ikRes.error_code.SUCCESS)
   {
     ROS_INFO("IK service call succeeded");
@@ -158,7 +158,7 @@ void CarlMoveIt::moveToPose(const carl_moveit::MoveToPoseGoalConstPtr &goal)
   moveToPoseServer.setSucceeded(result);
 }
 
-void CarlMoveIt::moveToJointPose(const carl_moveit::MoveToJointPoseGoalConstPtr &goal)
+void CarlMoveIt::moveToJointPose(const rail_manipulation_msgs::MoveToJointPoseGoalConstPtr &goal)
 {
   //extract joint states
   int jacoStartIndex = 0;
@@ -180,7 +180,7 @@ void CarlMoveIt::moveToJointPose(const carl_moveit::MoveToJointPoseGoalConstPtr 
   }
 
   //plan and execute
-  carl_moveit::MoveToJointPoseResult result;
+  rail_manipulation_msgs::MoveToJointPoseResult result;
   armGroup->setPlannerId("arm[KPIECEkConfigDefault]");
   if (goal->planningTime == 0.0)
     armGroup->setPlanningTime(5.0);
@@ -206,7 +206,7 @@ void CarlMoveIt::moveToJointPose(const carl_moveit::MoveToJointPoseGoalConstPtr 
   moveToJointPoseServer.setSucceeded(result);
 }
 
-bool CarlMoveIt::cartesianPathCallback(carl_moveit::CartesianPath::Request &req, carl_moveit::CartesianPath::Response &res)
+bool CarlMoveIt::cartesianPathCallback(rail_manipulation_msgs::CartesianPath::Request &req, rail_manipulation_msgs::CartesianPath::Response &res)
 {
   double eefStep = .05;
   double  jumpThreshold = 1.5;
@@ -292,7 +292,7 @@ bool CarlMoveIt::cartesianPathCallback(carl_moveit::CartesianPath::Request &req,
   return true;
 }
 
-bool CarlMoveIt::ikCallback(carl_moveit::CallIK::Request &req, carl_moveit::CallIK::Response &res)
+bool CarlMoveIt::ikCallback(rail_manipulation_msgs::CallIK::Request &req, rail_manipulation_msgs::CallIK::Response &res)
 {
   moveit_msgs::GetPositionIK::Response ikRes = callIK(req.pose);
 

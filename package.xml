@@ -1,17 +1,17 @@
 <package>
   <name>carl_moveit</name>
-  <version>0.0.16</version>
+  <version>0.0.17</version>
   <description>MoveIt! Configuration and ROS Interface for CARL</description>
 
-  <maintainer email="davidkent@wpi.edu">David Kent</maintainer>
+  <maintainer email="dekent@gatech.edu">David Kent</maintainer>
   <maintainer email="rctoris@wpi.edu">Russell Toris</maintainer>
-  <author email="davidkent@wpi.edu">David Kent</author>
+  <author email="dekent@gatech.edu">David Kent</author>
 
   <license>BSD</license>
 
   <url type="website">http://ros.org/wiki/carl_moveit</url>
-  <url type="bugtracker">https://github.com/WPI-RAIL/carl_moveit/issues</url>
-  <url type="repository">https://github.com/WPI-RAIL/carl_moveit</url>
+  <url type="bugtracker">https://github.com/GT-RAIL/carl_moveit/issues</url>
+  <url type="repository">https://github.com/GT-RAIL/carl_moveit</url>
 
   <buildtool_depend>catkin</buildtool_depend>
   

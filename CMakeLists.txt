@@ -29,21 +29,9 @@ find_package(Eigen REQUIRED)
 ## Declare ROS messages and services ##
 #######################################
 
-## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  CallIK.srv
-  CartesianPath.srv
-)
-
 ## Generate actions in the 'action' folder
 add_action_files(
   FILES
-  Arm.action
-  MoveToJointPose.action
-  MoveToPose.action
-  Pickup.action
-  Store.action
   WipeSurface.action
 )
 
@@ -51,7 +39,6 @@ add_action_files(
 generate_messages(
   DEPENDENCIES
   actionlib_msgs
-  geometry_msgs
 )
 
 ###################################################
@@ -76,21 +63,21 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(carl_moveit_wrapper src/carl_moveit.cpp include/carl_moveit/carl_moveit.h)
-add_executable(common_actions src/common_actions.cpp)
+add_executable(tablebot_common_actions src/common_actions.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(carl_moveit_wrapper ${catkin_LIBRARIES})
-target_link_libraries(common_actions ${catkin_LIBRARIES})
+target_link_libraries(tablebot_common_actions ${catkin_LIBRARIES})
 
-add_dependencies(carl_moveit_wrapper carl_moveit_gencpp)
-add_dependencies(common_actions carl_moveit_gencpp)
+add_dependencies(carl_moveit_wrapper rail_manipulation_msgs_gencpp)
+add_dependencies(tablebot_common_actions carl_moveit_gencpp rail_manipulation_msgs_gencpp)
 
 #############
 ## Install ##
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS carl_moveit_wrapper common_actions
+install(TARGETS carl_moveit_wrapper tablebot_common_actions
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

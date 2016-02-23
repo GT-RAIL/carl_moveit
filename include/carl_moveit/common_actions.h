@@ -1,18 +1,18 @@
-#ifndef CARL_MOVEIT_H_
-#define CARL_MOVEIT_H_
+#ifndef COMMON_ACTIONS_H_
+#define COMMON_ACTIONS_H_
 
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
-#include <carl_moveit/ArmAction.h>
-#include <carl_moveit/CartesianPath.h>
-#include <carl_moveit/MoveToJointPoseAction.h>
-#include <carl_moveit/MoveToPoseAction.h>
-#include <carl_moveit/PickupAction.h>
-#include <carl_moveit/StoreAction.h>
 #include <carl_moveit/WipeSurfaceAction.h>
-#include <rail_manipulation_msgs/LiftAction.h>
+#include <rail_manipulation_msgs/ArmAction.h>
+#include <rail_manipulation_msgs/CartesianPath.h>
 #include <rail_manipulation_msgs/GripperAction.h>
+#include <rail_manipulation_msgs/LiftAction.h>
+#include <rail_manipulation_msgs/MoveToJointPoseAction.h>
+#include <rail_manipulation_msgs/MoveToPoseAction.h>
+#include <rail_manipulation_msgs/PickupAction.h>
+#include <rail_manipulation_msgs/StoreAction.h>
 #include <std_srvs/Empty.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
@@ -43,14 +43,14 @@ private:
   ros::ServiceClient attachClosestObjectClient;
   ros::ServiceClient detachObjectsClient;
 
-  actionlib::SimpleActionClient<carl_moveit::MoveToJointPoseAction> moveToJointPoseClient;
-  actionlib::SimpleActionClient<carl_moveit::MoveToPoseAction> moveToPoseClient;
+  actionlib::SimpleActionClient<rail_manipulation_msgs::MoveToJointPoseAction> moveToJointPoseClient;
+  actionlib::SimpleActionClient<rail_manipulation_msgs::MoveToPoseAction> moveToPoseClient;
   actionlib::SimpleActionClient<rail_manipulation_msgs::GripperAction> gripperClient;
   actionlib::SimpleActionClient<rail_manipulation_msgs::LiftAction> liftClient;
   actionlib::SimpleActionServer<rail_manipulation_msgs::LiftAction> liftServer;
-  actionlib::SimpleActionServer<carl_moveit::ArmAction> armServer;
-  actionlib::SimpleActionServer<carl_moveit::PickupAction> pickupServer;
-  actionlib::SimpleActionServer<carl_moveit::StoreAction> storeServer;
+  actionlib::SimpleActionServer<rail_manipulation_msgs::ArmAction> armServer;
+  actionlib::SimpleActionServer<rail_manipulation_msgs::PickupAction> pickupServer;
+  actionlib::SimpleActionServer<rail_manipulation_msgs::StoreAction> storeServer;
   actionlib::SimpleActionServer<carl_moveit::WipeSurfaceAction> wipeSurfaceServer;
 
   tf::TransformBroadcaster tfBroadcaster;
@@ -67,7 +67,7 @@ private:
   *
   * @param goal Specification of the arm action to be executed.
   */
-  void executeArmAction(const carl_moveit::ArmGoalConstPtr &goal);
+  void executeArmAction(const rail_manipulation_msgs::ArmGoalConstPtr &goal);
 
   /**
   * \brief Perform a pickup action
@@ -78,7 +78,7 @@ private:
   *
   * @param goal Grasp pose with which to execute the pickup
   */
-  void executePickup(const carl_moveit::PickupGoalConstPtr &goal);
+  void executePickup(const rail_manipulation_msgs::PickupGoalConstPtr &goal);
 
   /**
   * \brief Perform a store action
@@ -88,7 +88,7 @@ private:
   *
   * @param goal Empty store goal
   */
-  void executeStore(const carl_moveit::StoreGoalConstPtr &goal);
+  void executeStore(const rail_manipulation_msgs::StoreGoalConstPtr &goal);
 
   void executeWipeSurface(const carl_moveit::WipeSurfaceGoalConstPtr &goal);
 
