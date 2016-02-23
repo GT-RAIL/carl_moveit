@@ -2,6 +2,16 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.17 (2016-02-23)
+-------------------
+* Update .travis.yml
+* Update .travis.yml
+* Update README.md
+* Update package.xml
+* Merge branch 'develop' of github.com:WPI-RAIL/carl_moveit into develop
+* Consolidated some messages with rail_manipulation_msgs
+* Contributors: David Kent
+
 0.0.16 (2015-08-18)
 -------------------
 * Added store pose to the store action, instead of hardcoding it to CARL's storage platform
