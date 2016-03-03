@@ -4,7 +4,6 @@
   <description>MoveIt! Configuration and ROS Interface for CARL</description>
 
   <maintainer email="dekent@gatech.edu">David Kent</maintainer>
-  <maintainer email="rctoris@wpi.edu">Russell Toris</maintainer>
   <author email="dekent@gatech.edu">David Kent</author>
 
   <license>BSD</license>
