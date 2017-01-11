@@ -120,7 +120,7 @@ void CommonActions::executePickup(const rail_manipulation_msgs::PickupGoalConstP
   geometry_msgs::PoseStamped cartesianPose;
   cartesianPose.header.frame_id = "base_footprint";
   tfListener.transformPose("base_footprint", graspPose, cartesianPose);
-  srv.request.waypoints.push_back(cartesianPose.pose);
+  srv.request.waypoints.push_back(cartesianPose);
   srv.request.avoidCollisions = false;
   if (!cartesianPathClient.call(srv))
   {
@@ -223,7 +223,7 @@ void CommonActions::executeStore(const rail_manipulation_msgs::StoreGoalConstPtr
   approachAngleGoal.pose.pose.position.z -= .1;
   cartesianPose.header.frame_id = "base_footprint";
   tfListener.transformPose("base_footprint", approachAngleGoal.pose, cartesianPose);
-  srv.request.waypoints.push_back(cartesianPose.pose);
+  srv.request.waypoints.push_back(cartesianPose);
   srv.request.avoidCollisions = false;
   if (!cartesianPathClient.call(srv))
   {
@@ -266,7 +266,7 @@ void CommonActions::executeStore(const rail_manipulation_msgs::StoreGoalConstPtr
 
   cartesianPose.pose.position.z += .05;
   srv.request.waypoints.clear();
-  srv.request.waypoints.push_back(cartesianPose.pose);
+  srv.request.waypoints.push_back(cartesianPose);
   srv.request.avoidCollisions = false;
   if (!cartesianPathClient.call(srv))
   {
@@ -487,7 +487,7 @@ void CommonActions::executeWipeSurface(const carl_moveit::WipeSurfaceGoalConstPt
   rail_manipulation_msgs::CartesianPath srv;
   for (unsigned int i = 0; i < 3; i ++)
   {
-    geometry_msgs::Pose pose = poseGoal.pose.pose;
+    geometry_msgs::PoseStamped pose = poseGoal.pose;
     /*
     //back and forth motion
     pose.position.y += .2;
@@ -496,22 +496,22 @@ void CommonActions::executeWipeSurface(const carl_moveit::WipeSurfaceGoalConstPt
     srv.request.waypoints.push_back(pose);
     */
     //diamond motion
-    pose.position.y += .15;
+    pose.pose.position.y += .15;
     srv.request.waypoints.push_back(pose);
-    pose.position.y -= .15;
-    pose.position.x += .05;
+    pose.pose.position.y -= .15;
+    pose.pose.position.x += .05;
     srv.request.waypoints.push_back(pose);
-    pose.position.y -= .15;
-    pose.position.x -= .05;
+    pose.pose.position.y -= .15;
+    pose.pose.position.x -= .05;
     srv.request.waypoints.push_back(pose);
-    pose.position.y += .15;
-    pose.position.x -= .05;
+    pose.pose.position.y += .15;
+    pose.pose.position.x -= .05;
     srv.request.waypoints.push_back(pose);
   }
   ROS_INFO("Waypoints y:");
   for (unsigned int i = 0; i < srv.request.waypoints.size(); i ++)
   {
-    ROS_INFO("%f", srv.request.waypoints[i].position.y);
+    ROS_INFO("%f", srv.request.waypoints[i].pose.position.y);
   }
   srv.request.avoidCollisions = false;
   if (!cartesianPathClient.call(srv))
@@ -535,14 +535,15 @@ void CommonActions::liftArm(const rail_manipulation_msgs::LiftGoalConstPtr &goal
   tf::StampedTransform currentEefTransform;
   tfListener.waitForTransform("jaco_link_eef", "base_footprint", ros::Time::now(), ros::Duration(1.0));
   tfListener.lookupTransform("base_footprint", "jaco_link_eef", ros::Time(0), currentEefTransform);
-  geometry_msgs::Pose liftPose;
-  liftPose.position.x = currentEefTransform.getOrigin().x();
-  liftPose.position.y = currentEefTransform.getOrigin().y();
-  liftPose.position.z = currentEefTransform.getOrigin().z() + .1;
-  liftPose.orientation.x = currentEefTransform.getRotation().x();
-  liftPose.orientation.y = currentEefTransform.getRotation().y();
-  liftPose.orientation.z = currentEefTransform.getRotation().z();
-  liftPose.orientation.w = currentEefTransform.getRotation().w();
+  geometry_msgs::PoseStamped liftPose;
+  liftPose.header.frame_id = "base_footprint";
+  liftPose.pose.position.x = currentEefTransform.getOrigin().x();
+  liftPose.pose.position.y = currentEefTransform.getOrigin().y();
+  liftPose.pose.position.z = currentEefTransform.getOrigin().z() + .1;
+  liftPose.pose.orientation.x = currentEefTransform.getRotation().x();
+  liftPose.pose.orientation.y = currentEefTransform.getRotation().y();
+  liftPose.pose.orientation.z = currentEefTransform.getRotation().z();
+  liftPose.pose.orientation.w = currentEefTransform.getRotation().w();
   srv.request.waypoints.push_back(liftPose);
   srv.request.avoidCollisions = false;
 

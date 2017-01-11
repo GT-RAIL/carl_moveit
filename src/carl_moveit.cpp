@@ -212,9 +212,19 @@ bool CarlMoveIt::cartesianPathCallback(rail_manipulation_msgs::CartesianPath::Re
   double  jumpThreshold = 1.5;
   moveit_msgs::RobotTrajectory finalTraj;
 
+  //convert waypoints to correct frame
+  vector<geometry_msgs::Pose> convertedWaypoints;
+  for (unsigned int i = 0; i < req.waypoints.size(); i ++)
+  {
+    geometry_msgs::PoseStamped tempPose;
+    tempPose.header.frame_id = armGroup->getPoseReferenceFrame();
+    tf.transformPose(armGroup->getPoseReferenceFrame(), req.waypoints[i], tempPose);
+    convertedWaypoints.push_back(tempPose.pose);
+  }
+
   //calculate trajectory
   moveit_msgs::RobotTrajectory tempTraj;
-  double completion = armGroup->computeCartesianPath(req.waypoints, eefStep, jumpThreshold, tempTraj, req.avoidCollisions);
+  double completion = armGroup->computeCartesianPath(convertedWaypoints, eefStep, jumpThreshold, tempTraj, req.avoidCollisions);
   if (completion == -1)
   {
     ROS_INFO("Could not calculate a path.");
@@ -241,7 +251,7 @@ bool CarlMoveIt::cartesianPathCallback(rail_manipulation_msgs::CartesianPath::Re
           eefStep /= 2.0;
         else
           eefStep *= 2.0;
-        newCompletion = armGroup->computeCartesianPath(req.waypoints, eefStep, jumpThreshold, tempTraj, req.avoidCollisions);
+        newCompletion = armGroup->computeCartesianPath(convertedWaypoints, eefStep, jumpThreshold, tempTraj, req.avoidCollisions);
         if (newCompletion > completion)
         {
           ROS_INFO("Found a better path.");

@@ -2,6 +2,11 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.18 (2017-01-11)
+-------------------
+* Updated for new version of rail_manipulation_msgs
+* Contributors: David Kent, Russell Toris
+
 0.0.17 (2016-02-23)
 -------------------
 * Update .travis.yml
