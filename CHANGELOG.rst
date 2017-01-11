@@ -2,8 +2,8 @@
 Changelog for package carl_moveit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.18 (2017-01-11)
+-------------------
 * Updated for new version of rail_manipulation_msgs
 * Contributors: David Kent, Russell Toris
 
