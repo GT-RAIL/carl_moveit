@@ -30,6 +30,7 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <std_msgs/Bool.h>
 #include <std_srvs/Empty.h>
+#include <tf/transform_listener.h>
 #include <tf2_ros/transform_listener.h>
 #include <wpi_jaco_msgs/AngularCommand.h>
 
@@ -70,6 +71,7 @@ private:
   actionlib::SimpleActionServer<rail_manipulation_msgs::MoveToPoseAction> moveToPoseServer;
   actionlib::SimpleActionServer<rail_manipulation_msgs::MoveToJointPoseAction> moveToJointPoseServer;
 
+  tf::TransformListener tf;
   tf2_ros::Buffer tfBuffer;
   tf2_ros::TransformListener tfListener;
 
